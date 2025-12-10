@@ -12,6 +12,7 @@ run_enrichment(
   gene_stats = NULL,
   gsea_weight = 1,
   n_perm = 0,
+  alternative = c("greater", "less", "two.sided"),
   seed = NULL
 )
 }

@@ -15,6 +15,7 @@ enrich_by_ihc(
   n_perm = NULL,
   min_genes = 10,
   seed = NULL,
+  alternative = "greater",
   expr_col = "Level"
 )
 }

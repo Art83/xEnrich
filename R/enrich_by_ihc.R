@@ -41,6 +41,7 @@ enrich_by_ihc <- function(gene_list,
                           n_perm = NULL,
                           min_genes = 10,
                           seed=NULL,
+                          alternative="greater",
                           expr_col = "Level") {
 
   # Validate
@@ -91,17 +92,18 @@ enrich_by_ihc <- function(gene_list,
           if (length(local_gene_stats) == 0) return(NULL)
         }
 
-        res <- enrichmentHPA::run_enrichment(
+        res <- run_enrichment(
           gene_list = gene_list,
           gene_stats = local_gene_stats,
           method = "gsea",
           n_perm = n_perm,
           seed = seed,
+          alternative = alternative,
           universe = universe
         )
       } else {
         # Hypergeometric
-        res <- enrichmentHPA::run_enrichment(
+        res <- run_enrichment(
           gene_list = gene_list,
           enriched_genes = expressed_genes,
           method = "hypergeometric",
