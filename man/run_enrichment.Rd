@@ -13,6 +13,8 @@ run_enrichment(
   gsea_weight = 1,
   n_perm = 0,
   alternative = c("greater", "less", "two.sided"),
+  adaptive = c(TRUE, FALSE),
+  eps = 0.01,
   seed = NULL
 )
 }

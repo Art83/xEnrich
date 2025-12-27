@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(enrichmentHPA)
+library(xEnrich)
 
-test_check("enrichmentHPA")
+test_check("xEnrich")
