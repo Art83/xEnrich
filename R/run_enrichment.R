@@ -18,14 +18,18 @@ run_enrichment <- function(
     enriched_genes = NULL,
     gene_stats = NULL,
     gsea_weight = 1,
-    n_perm = 0,
+    n_perm = 1000,
     alternative = c("greater", "less", "two.sided"),
     adaptive = FALSE,
+    adaptive_mode = c("pvalue", "decision", "refine"),
     eps = 0.01,
     seed = NULL
 ) {
   if (length(gene_list) == 0 || is.null(gene_list)) {
     stop("gene_list must not be empty.")
+  }
+  if(method=="gsea" && n_perm <= 0){
+    stop("Number of permutations for gsea is not specified.")
   }
 
   method <- match.arg(method)
@@ -135,29 +139,102 @@ run_enrichment <- function(
   }
 
   pval <- NA_real_
-  if (!adaptive && n_perm > 0) {
-    if (!is.null(seed)) set.seed(seed)
+  if (!is.null(seed)) set.seed(seed)
 
-    perm_ES <- replicate(n_perm, perm_fun())
+  perm_ES <- replicate(n_perm, perm_fun())
 
-    if (alternative == "greater") {
-      pval <- (sum(perm_ES >= ES) + 1) / (n_perm + 1)
-    } else if (alternative == "less") {
-      pval <- (sum(perm_ES <= ES) + 1) / (n_perm + 1)
-    } else if (alternative == "two.sided") {
-      pval <- (sum(perm_ES >= abs(ES)) + 1) / (n_perm + 1)
-    }
+  k0 <- if (alternative == "greater") {
+    sum(perm_ES >= ES)
+  } else if (alternative == "less") {
+    sum(perm_ES <= ES)
+  } else {
+    sum(perm_ES >= abs(ES))
   }
+  B0 <- n_perm
 
-  if(adaptive && n_perm > 0) {
-    res <- .adaptive_pvalue(
-      obs_stat   = ES,
-      perm_fun   = perm_fun,
-      alternative = alternative,
-      eps        = eps,
-      seed       = seed
+  inf_fixed <- .permutation_inference(
+    k_extreme = k0,
+    n_perm    = B0
+  )
+
+  if (!adaptive) {
+    pval <- inf_fixed$p_hat
+    inference <- c(
+      list(method = "fixed"),
+      inf_fixed
     )
-    pval <- res$p
+
+  } else {
+    adaptive_mode <- match.arg(adaptive_mode)
+    if(adaptive_mode == "pvalue") {
+      res <- .adaptive_pvalue(
+        obs_stat   = ES,
+        perm_fun   = perm_fun,
+        alternative = alternative,
+        eps        = eps,
+        seed       = seed
+      )
+      pval <- res$p
+      inference <- list(
+        method = "adaptive",
+        res
+      )
+    } else if(adaptive_mode == "decision"){
+      res <- .adaptive_decision(
+        obs_stat    = ES,
+        perm_fun    = perm_fun,
+        alternative = alternative,
+        seed        = seed
+      )
+      pval <- res$p
+      inference <- list(
+        method = "adaptive_decision",
+        res
+      )
+    } else if (adaptive_mode == "refine") {
+      if(inf_fixed$decision_alpha != "borderline"){
+        # nothing to refine
+        pval <- inf_fixed$p_hat
+        inference <- c(
+          list(method = "fixed_not_refined"),
+          old_pval = inf_fixed$p_hat,
+          old_p_ci_low = inf_fixed$p_ci_low,
+          old_p_ci_high = inf_fixed$p_ci_high,
+          old_decision_alpha = inf_fixed$decision_alpha,
+          inf_fixed
+        )
+      } else {
+        res <- .adaptive_refine_decision(
+          obs_stat = ES,
+          perm_fun = perm_fun,
+          k0 = k0,
+          B0 = B0,
+          alternative = alternative,
+          alpha = alpha,
+          seed = seed
+        )
+
+        pval <- res$p
+        inference <- c(
+          list(method = "fixed_refine"),
+          old_pval = inf_fixed$p_hat,
+          old_p_ci_low = inf_fixed$p_ci_low,
+          old_p_ci_high = inf_fixed$p_ci_high,
+          old_decision_alpha = inf_fixed$decision_alpha,
+          new_pval = res$p_hat,
+          new_p_ci_low = res$p_ci_low,
+          new_p_ci_high = res$p_ci_high,
+          new_decision_alpha = res$decision_alpha,
+          converged = res$converged,
+          res,
+          list(
+            fixed_k = k0,
+            fixed_B = B0,
+            resolved = res$decision_alpha != "borderline"
+          )
+        )
+      }
+    }
   }
 
   # Leading edge (appropriate peak depending on ES sign)
@@ -171,20 +248,6 @@ run_enrichment <- function(
     leading_edge <- names(ranked_genes)[hits & seq_along(ranked_genes) <= peak_index]
   } else {
     leading_edge <- names(ranked_genes)[hits & seq_along(ranked_genes) >= peak_index]
-  }
-
-  if (adaptive) {
-    inference <- list(
-      method = "adaptive",
-      p = res$p,
-      B = res$B,
-      k = res$k,
-      RSE = res$RSE,
-      converged = res$converged,
-      trace = res$trace
-    )
-  } else {
-    inference <- list(method = "fixed", n_perm = n_perm)
   }
 
   return(list(

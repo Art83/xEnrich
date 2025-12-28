@@ -11,9 +11,10 @@ run_enrichment(
   enriched_genes = NULL,
   gene_stats = NULL,
   gsea_weight = 1,
-  n_perm = 0,
+  n_perm = 1000,
   alternative = c("greater", "less", "two.sided"),
-  adaptive = c(TRUE, FALSE),
+  adaptive = FALSE,
+  adaptive_mode = c("pvalue", "decision", "refine"),
   eps = 0.01,
   seed = NULL
 )
