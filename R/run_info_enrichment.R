@@ -71,7 +71,8 @@ run_info_enrichment <- function(
   })
 
   res <- do.call(rbind, results)
-  res$padj <- p.adjust(res$p_enrich, method = "BH")
+  res$padj_enrich <- p.adjust(res$p_enrich, method = "BH")
+  res$padj_deplete <- p.adjust(res$p_deplete, method = "BH")
   res
 }
 
