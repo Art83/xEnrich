@@ -9,7 +9,7 @@ load_reference(
   source = c("tabula", "hpa"),
   dest_dir = xEnrich_cache_dir(),
   overwrite = FALSE,
-  record_id = 441892
+  verify = TRUE
 )
 }
 \arguments{

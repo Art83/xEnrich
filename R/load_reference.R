@@ -10,7 +10,7 @@ load_reference <- function(datasets = NULL,
                            source = c("tabula", "hpa"),
                            dest_dir = xEnrich_cache_dir(),
                            overwrite = FALSE,
-                           record_id = 441892) {
+                           verify = TRUE) {
 
   source <- match.arg(source)
 
@@ -46,7 +46,8 @@ load_reference <- function(datasets = NULL,
       dataset   = ds,
       dest_dir  = dest_dir,
       source    = source,
-      overwrite = overwrite
+      overwrite = overwrite,
+      verify = verify
     )
   })
 
@@ -69,20 +70,23 @@ xEnrich_cache_dir <- function() {
 load_zenodo_rds <- function(dataset,
                             dest_dir = xEnrich_cache_dir(),
                             source = c("tabula", "hpa"),
-                            overwrite = FALSE) {
+                            overwrite = FALSE,
+                            verify = TRUE) {
   record_id = 441892
 
   source <- match.arg(source)
   manifest <- if (source == "tabula") tabula_manifest else hpa_manifest
 
-  if (!all(c("dataset", "filename") %in% names(manifest))) {
-    stop("Manifest must contain columns: 'dataset' and 'filename'.")
-  }
 
   filename <- manifest$filename[manifest$dataset == dataset]
 
   if (length(filename) == 0) stop("Dataset '", dataset, "' not found in manifest for source='", source, "'.")
   if (length(filename) > 1) stop("Dataset key '", dataset, "' is not unique in manifest for source='", source, "'.")
+
+  expected <- if(verify) manifest$sha256[manifest$filename == filename] else NA_character_
+  if (verify && (length(expected) != 1 || is.na(expected) || !nzchar(expected))) {
+    stop("Missing/invalid sha256 in manifest for file: ", filename)
+  }
 
   url <- paste0(
     "https://sandbox.zenodo.org/api/records/",
@@ -97,17 +101,22 @@ load_zenodo_rds <- function(dataset,
 
   if (!file.exists(dest_file) || isTRUE(overwrite)) {
     message("Fetching reference: ", filename, " ...")
-    ok <- tryCatch({
+    code <- tryCatch({
       utils::download.file(url, dest_file, mode = "wb", quiet = TRUE)
-      TRUE
-    }, error = function(e) FALSE)
+    }, error = function(e) NA_integer_)
 
-    if (!ok || !file.exists(dest_file)) {
+    if (!identical(code, 0L) || !file.exists(dest_file)) {
       stop("Download failed for ", filename, ". Check record_id, filename, and connectivity.")
+    }
+
+    if(verify){
+      got <- digest::digest(dest_file, algo = "sha256", file = TRUE)
+      if(!identical(tolower(got), tolower(expected))) stop("SHA256 mismatch for ", url, " (download corrupted or wrong file).")
     }
   } else {
     message("Using cache: ", dest_file)
   }
+
 
   readRDS(dest_file)
 }
