@@ -1,56 +1,113 @@
-#' Download and load HPA RNA-seq data
-#'
-#' Downloads and reads a compressed RNA-seq dataset from the Human Protein Atlas.
-#'
-#' @param file Name of the file to be saved locally (e.g., "rna_ic.zip").
-#' @param type Type of dataset to download. Options are:
-#'   \itemize{
-#'     \item \code{"hpa_brain"} – RNA across 13 brain regions
-#'     \item \code{"rna_sn_clusters_brain"} – RNA across 34 single nuclei cluster types in 11 brain regions
-#'     \item \code{"rna_ic"} – RNA expression in immune cell types
-#'     \item \code{"rna_ic_monaco"} - RNA expression in subsets of immune cell types
-#'     \item \code{"rna_sn_clusters_organs"} - RNA expression across clusters in different organs
-#'     \item \code{"ihc_cells"} - IHC data
-#'     \item \code{"rna_organs"}
-#'   }
-#' @param dest_dir Local directory to store the downloaded file (default: \code{tempdir()}).
-#' @param overwrite Logical; if \code{TRUE}, the file will be re-downloaded even if it exists.
-#'
-#' @return A \code{data.frame} containing the unzipped RNA-seq dataset.
+#' Load one or more reference datasets shipped via Zenodo
+#' @param datasets Character vector of dataset IDs to download/load. Use NULL (default)
+#'   to load all datasets available for the given source.
+#' @param source Which manifest to use: hpa or tabula.
+#' @param dest_dir Where to cache downloaded files. Defaults to a persistent cache dir.
+#' @param overwrite Re-download even if file exists locally.
+#' @return A named list of loaded R objects (one per dataset).
 #' @export
-load_reference <- function(file,
-                           type = "hpa_brain",
-                           dest_dir = tempdir(),
-                           overwrite = FALSE) {
-  urls_list <- list(
-    hpa_brain = "https://www.proteinatlas.org/download/tsv/rna_brain_region_hpa.tsv.zip",
-    rna_sn_clusters_brain = "https://www.proteinatlas.org/download/tsv/rna_single_nuclei_cluster_type.tsv.zip",
-    rna_ic = "https://www.proteinatlas.org/download/tsv/rna_immune_cell.tsv.zip",
-    rna_ic_monaco = "https://www.proteinatlas.org/download/tsv/rna_immune_cell_monaco.tsv.zip",
-    rna_sn_clusters_organs = "https://www.proteinatlas.org/download/tsv/rna_single_cell_cluster.tsv.zip",
-    rna_organs = "https://www.proteinatlas.org/download/tsv/rna_tissue_consensus.tsv.zip",
-    ihc_cells = "https://www.proteinatlas.org/download/tsv/normal_ihc_data.tsv.zip"
+load_reference <- function(datasets = NULL,
+                           source = c("tabula", "hpa"),
+                           dest_dir = xEnrich_cache_dir(),
+                           overwrite = FALSE,
+                           record_id = 441892) {
+
+  source <- match.arg(source)
+
+  # Use internal manifests (stored in sysdata.rda)
+  manifest <- if (source == "tabula") tabula_manifest else hpa_manifest
+
+  if (!all(c("dataset", "filename") %in% names(manifest))) {
+    stop("Manifest must contain columns: 'dataset' and 'filename'.")
+  }
+
+  available <- unique(manifest$dataset)
+
+  # NULL or empty => load all
+  if (is.null(datasets) || length(datasets) == 0) {
+    message(
+      "No datasets specified. Downloading all available for '", source,
+      "' (", length(available), " total)."
+    )
+    to_download <- available
+  } else {
+    invalid <- setdiff(datasets, available)
+    if (length(invalid) == length(datasets)) {
+      stop("No dataset found in manifest for source='", source, "'.")
+    }
+    if (length(invalid) > 0) {
+      message("Datasets not found: ", paste(invalid, collapse = ", "))
+    }
+    to_download <- intersect(datasets, available)
+  }
+
+  results <- lapply(to_download, function(ds) {
+    load_zenodo_rds(
+      dataset   = ds,
+      dest_dir  = dest_dir,
+      source    = source,
+      overwrite = overwrite
+    )
+  })
+
+  names(results) <- to_download
+  results
+}
+
+#' @noRd
+#' @keywords internal
+xEnrich_cache_dir <- function() {
+  tryCatch(
+    tools::R_user_dir("xEnrich", which = "cache"),
+    error = function(e) file.path(path.expand("~"), ".cache", "xEnrich")
+  )
+}
+
+
+#' @noRd
+#' @keywords internal
+load_zenodo_rds <- function(dataset,
+                            dest_dir = xEnrich_cache_dir(),
+                            source = c("tabula", "hpa"),
+                            overwrite = FALSE) {
+  record_id = 441892
+
+  source <- match.arg(source)
+  manifest <- if (source == "tabula") tabula_manifest else hpa_manifest
+
+  if (!all(c("dataset", "filename") %in% names(manifest))) {
+    stop("Manifest must contain columns: 'dataset' and 'filename'.")
+  }
+
+  filename <- manifest$filename[manifest$dataset == dataset]
+
+  if (length(filename) == 0) stop("Dataset '", dataset, "' not found in manifest for source='", source, "'.")
+  if (length(filename) > 1) stop("Dataset key '", dataset, "' is not unique in manifest for source='", source, "'.")
+
+  url <- paste0(
+    "https://sandbox.zenodo.org/api/records/",
+    record_id,
+    "/files/",
+    filename,
+    "/content"
   )
 
-  # Check for valid type
-  if (!type %in% names(urls_list)) {
-    stop("Invalid 'type' argument. Choose from: ", paste(names(urls_list), collapse = ", "))
-  }
+  if (!dir.exists(dest_dir)) dir.create(dest_dir, recursive = TRUE)
+  dest_file <- file.path(dest_dir, filename)
 
-  base_url <- urls_list[[type]]
-  dest_file <- file.path(dest_dir, file)
+  if (!file.exists(dest_file) || isTRUE(overwrite)) {
+    message("Fetching reference: ", filename, " ...")
+    ok <- tryCatch({
+      utils::download.file(url, dest_file, mode = "wb", quiet = TRUE)
+      TRUE
+    }, error = function(e) FALSE)
 
-  # Download if needed
-  if (!file.exists(dest_file) || overwrite) {
-    message("Downloading data from: ", base_url)
-    download.file(url = base_url, destfile = dest_file, mode = "wb")
+    if (!ok || !file.exists(dest_file)) {
+      stop("Download failed for ", filename, ". Check record_id, filename, and connectivity.")
+    }
   } else {
-    message("Using cached file: ", dest_file)
+    message("Using cache: ", dest_file)
   }
 
-  # Unzip and read first TSV file
-  unzipped_file <- unzip(dest_file, exdir = dest_dir)
-  data <- read.delim(unzipped_file[1], header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-
-  return(data)
+  readRDS(dest_file)
 }

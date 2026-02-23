@@ -2,36 +2,29 @@
 % Please edit documentation in R/load_reference.R
 \name{load_reference}
 \alias{load_reference}
-\title{Download and load HPA RNA-seq data}
+\title{Load one or more reference datasets shipped via Zenodo}
 \usage{
 load_reference(
-  file,
-  type = "hpa_brain",
-  dest_dir = tempdir(),
-  overwrite = FALSE
+  datasets = NULL,
+  source = c("tabula", "hpa"),
+  dest_dir = xEnrich_cache_dir(),
+  overwrite = FALSE,
+  record_id = 441892
 )
 }
 \arguments{
-\item{file}{Name of the file to be saved locally (e.g., "rna_ic.zip").}
+\item{datasets}{Character vector of dataset IDs to download/load. Use NULL (default)
+to load all datasets available for the given source.}
 
-\item{type}{Type of dataset to download. Options are:
-\itemize{
-\item \code{"hpa_brain"} – RNA across 13 brain regions
-\item \code{"rna_sn_clusters_brain"} – RNA across 34 single nuclei cluster types in 11 brain regions
-\item \code{"rna_ic"} – RNA expression in immune cell types
-\item \code{"rna_ic_monaco"} - RNA expression in subsets of immune cell types
-\item \code{"rna_sn_clusters_organs"} - RNA expression across clusters in different organs
-\item \code{"ihc_cells"} - IHC data
-\item \code{"rna_organs"}
-}}
+\item{source}{Which manifest to use: hpa or tabula.}
 
-\item{dest_dir}{Local directory to store the downloaded file (default: \code{tempdir()}).}
+\item{dest_dir}{Where to cache downloaded files. Defaults to a persistent cache dir.}
 
-\item{overwrite}{Logical; if \code{TRUE}, the file will be re-downloaded even if it exists.}
+\item{overwrite}{Re-download even if file exists locally.}
 }
 \value{
-A \code{data.frame} containing the unzipped RNA-seq dataset.
+A named list of loaded R objects (one per dataset).
 }
 \description{
-Downloads and reads a compressed RNA-seq dataset from the Human Protein Atlas.
+Load one or more reference datasets shipped via Zenodo
 }
