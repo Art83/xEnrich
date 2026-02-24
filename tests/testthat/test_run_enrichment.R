@@ -67,3 +67,16 @@ test_that("run_enrichment handles no overlap", {
 
   expect_true(result$p_value > 0.5)
 })
+
+
+test_that("gsea validation does not affect hypergeometric mode", {
+  result <- run_enrichment(
+    gene_list = c("A", "B"),
+    universe = LETTERS[1:10],
+    method = "hypergeometric",
+    enriched_genes = c("A", "C"),
+    n_perm = 0
+  )
+
+  expect_equal(result$method, "hypergeometric")
+})
