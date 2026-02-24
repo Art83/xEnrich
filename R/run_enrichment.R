@@ -2,12 +2,17 @@
 #'
 #' @param gene_list Character vector of user-supplied gene symbols.
 #' @param universe Character vector of all genes in the background set.
-#' @param method Enrichment method to use: "hypergeometric" or "gsea".
-#' @param enriched_genes Required if method = "hypergeometric".
-#' @param gene_stats Required if method = "gsea". Named numeric vector of gene scores (e.g., mean pTPM).
-#' @param gsea_weight Exponent for GSEA running sum (default = 1).
-#' @param n_perm Number of permutations for empirical p-value (GSEA only).
-#' @param seed Optional random seed for reproducibility.
+#' @param method Character. Enrichment method to use: "hypergeometric" or "gsea".
+#' @param enriched_genes Character vector. Required if method = "hypergeometric". The genes defining the biological set/pathway.
+#' @param gene_stats Numeric vector. Required if method = "gsea". Named numeric vector of gene scores.
+#' @param gsea_weight Numeric. Exponent for GSEA running sum (default = 1).
+#' @param n_perm Integer. Number of permutations for empirical p-value (GSEA only).
+#' @param alternative Character. Specifies the alternative hypothesis: "greater", "less", or "two.sided".
+#' @param adaptive Logical. If TRUE, uses early stopping for permutation tests based on convergence.
+#' @param adaptive_mode Character. Mode for early stopping: "pvalue", "decision", or "refine".
+#' @param eps Numeric. The relative standard error threshold for early stopping when adaptive_mode = "pvalue".
+#' @param alpha Numeric. Significance level used for confidence intervals and decision boundaries.
+#' @param seed Numeric. Optional random seed for reproducibility.
 #'
 #' @return A named list with enrichment results.
 #' @export
@@ -37,6 +42,7 @@ run_enrichment <- function(
   if (method == "gsea" && n_perm <= 0) {
     stop("n_perm must be > 0 for GSEA.")
   }
+
   ## ---------------- Hypergeometric ----------------
   if (method == "hypergeometric") {
     if (is.null(enriched_genes)) {
@@ -46,31 +52,41 @@ run_enrichment <- function(
 
     enriched_genes <- intersect(enriched_genes, universe)
 
-    N <- length(universe)
-    K <- length(enriched_genes)
-    n <- length(gene_list)
-    k <- sum(gene_list %in% enriched_genes)
+    # Renamed variables for intuitive mapping to the urn problem
+    total_pop <- length(universe)
+    pop_success <- length(enriched_genes)
+    pop_fail <- total_pop - pop_success
+
+    sample_size <- length(gene_list)
+    sample_success <- sum(gene_list %in% enriched_genes)
 
     # alternative support
     if (alternative == "greater") {
-      pval <- phyper(k - 1, K, N - K, n, lower.tail = FALSE)
+      # P(X >= sample_success)
+      pval <- phyper(sample_success - 1, pop_success, pop_fail, sample_size, lower.tail = FALSE)
     } else if (alternative == "less") {
-      pval <- phyper(k, K, N - K, n, lower.tail = TRUE)
+      # P(X <= sample_success)
+      pval <- phyper(sample_success, pop_success, pop_fail, sample_size, lower.tail = TRUE)
     } else {
       # Two-sided: use Fisher exact test for a clean definition
-      mat <- matrix(c(k, n - k, K - k, (N - K) - (n - k)), nrow = 2, byrow = TRUE)
+      mat <- matrix(c(
+        sample_success,
+        sample_size - sample_success,
+        pop_success - sample_success,
+        pop_fail - (sample_size - sample_success)
+      ), nrow = 2, byrow = TRUE)
       pval <- fisher.test(mat, alternative = "two.sided")$p.value
     }
 
-    fc <- if (K == 0) NA_real_ else (k / n) / (K / N)
+    fc <- if (pop_success == 0) NA_real_ else (sample_success / sample_size) / (pop_success / total_pop)
 
     return(list(
       method = "hypergeometric",
       p_value = pval,
-      overlap = k,
-      input_set_size = n,
-      group_set = K,
-      universe_size = N,
+      overlap = sample_success,
+      input_set_size = sample_size,
+      group_set = pop_success,
+      universe_size = total_pop,
       fold_change = fc
     ))
   }
@@ -86,6 +102,7 @@ run_enrichment <- function(
 
   ranked_genes <- sort(gene_stats, decreasing = TRUE)
   if (length(ranked_genes) == 0) stop("After restricting gene_stats to universe (and removing NA), no genes remain to rank.")
+  if (anyDuplicated(names(gene_stats))) stop("gene_stats must have unique names.")
 
   hits <- names(ranked_genes) %in% gene_list
   Nh <- sum(hits)
@@ -110,13 +127,14 @@ run_enrichment <- function(
 
   compute_es <- function(hit_mask) {
     denom <- sum(w_base[hit_mask])
-    if (denom == 0) return(0)
+    n_miss <- N_used - sum(hit_mask)
+    if (denom <= 0 || n_miss <= 0) return(0)
 
     step_hit <- numeric(N_used)
     step_miss <- numeric(N_used)
 
     step_hit[hit_mask] <- w_base[hit_mask] / denom
-    step_miss[!hit_mask] <- 1 / (N_used - sum(hit_mask))
+    step_miss[!hit_mask] <- 1 / n_miss
 
     rs <- cumsum(step_hit - step_miss)
     ES_pos <- max(rs)
@@ -128,9 +146,10 @@ run_enrichment <- function(
 
   # Permutation-based p-value
   perm_fun <- function() {
-    random_genes <- sample(names(ranked_genes), Nh, replace = FALSE)
-    random_hits  <- names(ranked_genes) %in% random_genes
-    compute_es(random_hits)
+    random_idx <- sample.int(N_used, Nh, replace = FALSE)
+    hit_mask <- logical(N_used)
+    hit_mask[random_idx] <- TRUE
+    compute_es(hit_mask)
   }
 
   count_extreme <- function(Tb, obs) {
@@ -139,7 +158,7 @@ run_enrichment <- function(
     else sum(abs(Tb) >= abs(obs))
   }
 
-##----------------------Inference-----------------------
+  ##----------------------Inference-----------------------
   pval <- NA_real_
   inference <- NULL
 
@@ -153,7 +172,8 @@ run_enrichment <- function(
       alpha=alpha
     )
     pval <- inf_fixed$p_hat
-    inference <- c(list(method = "fixed", fixed_k = k0, fixed_B = B0), inf_fixed)
+    inference <- c(list(method = "fixed", fixed_k = k0, fixed_B = B0),
+                   res = inf_fixed)
 
   } else {
 
@@ -167,7 +187,7 @@ run_enrichment <- function(
       pval <- res$p
       inference <- list(
         method = "adaptive",
-        res
+        res = res
       )
     } else if(adaptive_mode == "decision"){
       res <- .adaptive_decision(
@@ -179,7 +199,7 @@ run_enrichment <- function(
       pval <- res$p
       inference <- list(
         method = "adaptive_decision",
-        res
+        res = res
       )
     } else if (adaptive_mode == "refine") {
       # do an initial fixed run then refine only if borderline
@@ -194,7 +214,7 @@ run_enrichment <- function(
         pval <- inf_fixed$p_hat
         inference <- c(
           list(method = "fixed_not_refined", fixed_k = k0, fixed_B = B0),
-          inf_fixed
+          res = inf_fixed
         )
       } else {
         res <- .adaptive_refine_decision(
@@ -217,15 +237,27 @@ run_enrichment <- function(
 
   # Leading edge (appropriate peak depending on ES sign)
   denom_obs <- sum(w_base[hits])
-  step_hit <- numeric(N_used)
-  step_miss <- numeric(N_used)
-  step_hit[hits] <- w_base[hits] / denom_obs
-  step_miss[!hits] <- 1 / (N_used - Nh)
-  running_score <- cumsum(step_hit - step_miss)
+  n_miss <- N_used - Nh
 
-  peak_index <- if (ES >= 0) which.max(running_score) else which.min(running_score)
+  if (denom_obs <= 0 || n_miss <= 0) {
+    running_score <- rep(0, N_used)
+    peak_index <- 1L
+    leading_edge <- character(0)
+  } else {
+    step_hit <- numeric(N_used)
+    step_miss <- numeric(N_used)
 
-  leading_edge <- names(ranked_genes)[hits & seq_along(ranked_genes) <= peak_index]
+    step_hit[hits] <- w_base[hits] / denom_obs
+    step_miss[!hits] <- 1 / n_miss
+
+    running_score <- cumsum(step_hit - step_miss)
+    peak_index <- if (ES >= 0) which.max(running_score) else which.min(running_score)
+    if (ES >= 0) {
+      leading_edge <- names(ranked_genes)[hits & seq_along(ranked_genes) <= peak_index]
+    } else {
+      leading_edge <- names(ranked_genes)[hits & seq_along(ranked_genes) >= peak_index]
+    }
+  }
 
   return(list(
     method = "gsea",
@@ -310,12 +342,12 @@ run_enrichment <- function(
   }
 
   list(
-    p        = p_hat,
-    k        = k,
-    B        = B,
-    RSE      = RSE,
+    p = p_hat,
+    k = k,
+    B = B,
+    RSE = RSE,
     converged = (RSE < eps),
-    trace    = trace
+    trace = trace
   )
 }
 
@@ -353,13 +385,11 @@ run_enrichment <- function(
 
     k <- k + k_batch
 
-    # don't evaluate CI too early
     if (B >= B_min) {
 
-      ci <- binom::binom.confint(
-        x = k,
-        n = B,
-        methods = "wilson"
+      ci <- .wilson_ci(
+        x = k+1,
+        n = B+1
       )
 
       decision <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
@@ -384,10 +414,9 @@ run_enrichment <- function(
   p_hat <- (k + 1) / (B + 1)
   mc_se <- sqrt(p_hat * (1 - p_hat) / B)
 
-  ci <- binom::binom.confint(
-    x = k,
-    n = B,
-    methods = "wilson"
+  ci <- .wilson_ci(
+    x = k+1,
+    n = B+1
   )
 
   decision_alpha <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
@@ -440,10 +469,9 @@ run_enrichment <- function(
 
     k <- k + k_batch
 
-    ci <- binom::binom.confint(
-      x = k,
-      n = B,
-      methods = "wilson"
+    ci <- .wilson_ci(
+      x = k+1,
+      n = B+1
     )
 
     decision <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
@@ -462,10 +490,9 @@ run_enrichment <- function(
 
   p_hat <- (k + 1) / (B + 1)
 
-  ci <- binom::binom.confint(
-    x = k,
-    n = B,
-    methods = "wilson"
+  ci <- .wilson_ci(
+    x = k+1,
+    n = B+1
   )
 
   decision_alpha <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
@@ -489,27 +516,20 @@ run_enrichment <- function(
   p_hat <- (k_extreme + 1) / (n_perm + 1)
   mc_se <- sqrt(p_hat * (1 - p_hat) / n_perm)
 
-  ci <- binom::binom.confint(
-    x = k_extreme,
-    n = n_perm,
-    methods = "wilson"
+  ci <- .wilson_ci(
+    x = k_extreme+1,
+    n = n_perm+1
   )
 
-  decision_alpha <- if (ci$upper < alpha) {
-    "sig"
-  } else if (ci$lower > alpha) {
-    "nonsig"
-  } else {
-    "borderline"
-  }
+  decision_alpha <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
 
   list(
-    k_extreme      = k_extreme,
-    n_perm         = n_perm,
-    p_hat          = p_hat,
-    p_ci_low       = ci$lower,
-    p_ci_high      = ci$upper,
-    mc_se          = mc_se,
+    k_extreme = k_extreme,
+    n_permb = n_perm,
+    p_hat = p_hat,
+    p_ci_low = ci$lower,
+    p_ci_high = ci$upper,
+    mc_se = mc_se,
     decision_alpha = decision_alpha,
     stability_flag = decision_alpha == "borderline"
   )
@@ -522,3 +542,16 @@ run_enrichment <- function(
   if (ci_low  >= (alpha + tol)) return("nonsig")
   "borderline"
 }
+
+#' @noRd
+#' @keywords internal
+.wilson_ci <- function(x, n, conf.level = 0.95) {
+  if (n <= 0) return(c(lower = NA_real_, upper = NA_real_))
+  z <- stats::qnorm(1 - (1 - conf.level) / 2)
+  phat <- x / n
+  denom <- 1 + z^2 / n
+  centre <- (phat + z^2 / (2*n)) / denom
+  half <- (z * sqrt((phat*(1-phat) + z^2/(4*n)) / n)) / denom
+  list(lower = max(0, centre - half), upper = min(1, centre + half))
+}
+

@@ -16,6 +16,7 @@ run_enrichment(
   adaptive = FALSE,
   adaptive_mode = c("pvalue", "decision", "refine"),
   eps = 0.01,
+  alpha = 0.05,
   seed = NULL
 )
 }
@@ -24,17 +25,27 @@ run_enrichment(
 
 \item{universe}{Character vector of all genes in the background set.}
 
-\item{method}{Enrichment method to use: "hypergeometric" or "gsea".}
+\item{method}{Character. Enrichment method to use: "hypergeometric" or "gsea".}
 
-\item{enriched_genes}{Required if method = "hypergeometric".}
+\item{enriched_genes}{Character vector. Required if method = "hypergeometric". The genes defining the biological set/pathway.}
 
-\item{gene_stats}{Required if method = "gsea". Named numeric vector of gene scores (e.g., mean pTPM).}
+\item{gene_stats}{Numeric vector. Required if method = "gsea". Named numeric vector of gene scores.}
 
-\item{gsea_weight}{Exponent for GSEA running sum (default = 1).}
+\item{gsea_weight}{Numeric. Exponent for GSEA running sum (default = 1).}
 
-\item{n_perm}{Number of permutations for empirical p-value (GSEA only).}
+\item{n_perm}{Integer. Number of permutations for empirical p-value (GSEA only).}
 
-\item{seed}{Optional random seed for reproducibility.}
+\item{alternative}{Character. Specifies the alternative hypothesis: "greater", "less", or "two.sided".}
+
+\item{adaptive}{Logical. If TRUE, uses early stopping for permutation tests based on convergence.}
+
+\item{adaptive_mode}{Character. Mode for early stopping: "pvalue", "decision", or "refine".}
+
+\item{eps}{Numeric. The relative standard error threshold for early stopping when adaptive_mode = "pvalue".}
+
+\item{alpha}{Numeric. Significance level used for confidence intervals and decision boundaries.}
+
+\item{seed}{Numeric. Optional random seed for reproducibility.}
 }
 \value{
 A named list with enrichment results.

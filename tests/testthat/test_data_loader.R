@@ -10,7 +10,7 @@ testthat::test_that("load_reference loads all when datasets is NULL", {
       filename = c("rna_consensus.rds"),
       stringsAsFactors = FALSE
     ),
-    load_zenodo_rds = function(dataset, dest_dir, source, overwrite, record_id) {
+    load_zenodo_rds = function(dataset, dest_dir, source, overwrite, verify) {
       paste0("loaded_", dataset)
     },
     .package = "xEnrich"
@@ -107,5 +107,49 @@ testthat::test_that("load_zenodo_rds calls download.file when file missing", {
 
   obj <- xEnrich:::load_zenodo_rds("blood", source = "tabula", dest_dir = cache, overwrite = FALSE)
   testthat::expect_equal(called, 1L)
+  testthat::expect_true(isTRUE(obj$downloaded))
+})
+
+
+testthat::test_that("load_zenodo_rds errors when verify=TRUE and sha256 missing", {
+  testthat::local_mocked_bindings(
+    tabula_manifest = data.frame(
+      dataset = "blood",
+      filename = "blood.rds",
+      sha256 = NA_character_,
+      stringsAsFactors = FALSE
+    ),
+    .package = "xEnrich"
+  )
+
+  testthat::expect_error(
+    xEnrich:::load_zenodo_rds("blood", source = "tabula", dest_dir = tempdir(), verify = TRUE),
+    "Missing/invalid sha256"
+  )
+})
+
+testthat::test_that("load_zenodo_rds skips sha256 validation when verify=FALSE", {
+  cache <- tempfile("xEnrich-cache-")
+  dir.create(cache)
+
+  testthat::local_mocked_bindings(
+    tabula_manifest = data.frame(
+      dataset = "blood",
+      filename = "blood.rds",
+      sha256 = NA_character_,
+      stringsAsFactors = FALSE
+    ),
+    .package = "xEnrich"
+  )
+
+  testthat::local_mocked_bindings(
+    download.file = function(url, destfile, mode, quiet) {
+      saveRDS(list(downloaded = TRUE), destfile)
+      0
+    },
+    .package = "utils"
+  )
+
+  obj <- xEnrich:::load_zenodo_rds("blood", source = "tabula", dest_dir = cache, verify = FALSE)
   testthat::expect_true(isTRUE(obj$downloaded))
 })
