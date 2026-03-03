@@ -2,36 +2,158 @@
 % Please edit documentation in R/run_info_assoc.R
 \name{run_info_assoc}
 \alias{run_info_assoc}
-\title{Run enrichment analysis using information theory. Which pathways explain the phenotype}
+\title{Pathway-phenotype association via mutual information}
 \usage{
 run_info_assoc(
   expr,
-  gene_sets,
   phenotype,
+  gene_sets,
   universe = NULL,
   score = c("mean_z", "pc1"),
-  nbins = 10,
-  n_perm = 1000,
-  min_set_size = 10,
+  nbins = NULL,
+  n_perm = 1000L,
+  min_size = 10L,
+  max_size = Inf,
+  nthreads = 1L,
   seed = NULL
 )
 }
 \arguments{
-\item{expr}{samples x proteins/genes}
+\item{expr}{Numeric matrix of expression values, \strong{samples x genes}.
+Column names must be gene symbols.}
 
-\item{gene_sets}{list of characters with relevant pathways.}
+\item{phenotype}{Vector (numeric, factor, or character) of per-sample
+phenotype labels or values. Length must equal \code{nrow(expr)}.}
 
-\item{phenotype}{outcome vector}
+\item{gene_sets}{Named list of character vectors defining gene set
+membership (e.g. GO terms, pathways).}
 
-\item{universe}{Character vector of all genes in the background set.}
+\item{universe}{Character vector of background genes. Defaults to
+\code{colnames(expr)}.}
 
-\item{n_perm}{Number of permutations for null model.}
+\item{score}{Character string: \code{"mean_z"} (default) or \code{"pc1"}.
+See the Scoring methods section.}
 
-\item{seed}{Optional random seed for reproducibility.}
+\item{nbins}{\code{NULL} (default, auto-select) or a positive integer
+number of equal-frequency bins for score discretisation. See the
+Binning section.}
+
+\item{n_perm}{Positive integer. Phenotype-label permutations for the null
+distribution. Default \code{1000}.}
+
+\item{min_size}{Integer. Minimum gene set size after universe intersection.
+Default \code{10}.}
+
+\item{max_size}{Integer. Maximum gene set size after universe intersection.
+Default \code{Inf}. MI naturally down-weights large sets (high pathway
+coverage compresses marginal entropy), so this is a computational
+convenience rather than a statistical necessity.}
+
+\item{nthreads}{Positive integer. Number of threads for the permutation
+loop via \code{parallel::mclapply}. Default \code{1L} (no parallelism).
+Values > 1 are silently reduced to 1 on Windows where forking is
+unavailable.}
+
+\item{seed}{Optional integer passed to \code{\link[=set.seed]{set.seed()}}. \code{NULL} (default)
+leaves the RNG state untouched.}
 }
 \value{
-A dataframe with results
+A data frame with one row per gene set (sorted by \code{padj}),
+containing:
+\describe{
+\item{\code{set}}{Gene set name.}
+\item{\code{set_size}}{Members retained after universe intersection.}
+\item{\code{nbins_used}}{Actual bin count used for this run.}
+\item{\code{MI_bits}}{Observed mutual information in bits.}
+\item{\code{z_score}}{MI standardised against the permutation null.
+\code{NA} when null SD is zero.}
+\item{\code{p_value}}{Empirical p-value with continuity correction
+\eqn{(1 + B_{\geq obs}) / (n\_perm + 1)}.}
+\item{\code{padj}}{BH-adjusted \code{p_value}.}
+\item{\code{null_mean}, \code{null_sd}}{Mean and SD of the permutation
+null MI distribution.}
+}
 }
 \description{
-Run enrichment analysis using information theory. Which pathways explain the phenotype
+Rather than testing whether a gene list overlaps a pathway (as in
+\code{\link[=run_info_enrichment]{run_info_enrichment()}}), this function asks: \emph{how much does a
+pathway's aggregate activity, measured across samples, explain a
+phenotypic outcome?}
+}
+\details{
+Each pathway is summarised into a single per-sample activity score
+(either the mean z-score across member genes, or the first principal
+component). Mutual information (MI) between that score and the phenotype
+vector is computed and compared against a label-permutation null,
+yielding an empirical p-value that is free of distributional assumptions
+about either the score or the phenotype.
+}
+\section{Scoring methods}{
+
+\describe{
+\item{\code{"mean_z"}}{Mean of z-scored expression across pathway
+members. Fast and robust; the default.}
+\item{\code{"pc1"}}{First principal component of z-scored expression.
+Captures co-expression structure within the pathway but is slower.
+PC1 sign is arbitrary, which does not affect MI (MI is
+sign-invariant) but would affect any signed downstream use.}
+}
+}
+
+\section{Binning and MI bias}{
+
+MI is estimated from equal-frequency binned pathway scores. All
+fixed-bin estimators carry a positive bias that shrinks with sample
+size. Because both observed and null MI values are computed under
+identical binning, this bias cancels in relative rankings and empirical
+p-values — but absolute \code{MI_bits} values should not be compared
+across datasets of different sizes.
+
+When \code{nbins = NULL} (default), bins are chosen automatically via a
+composite rule: Rice rule (\eqn{2n^{1/3}}) capped at
+\eqn{\lfloor n/5 \rfloor} (expected cell frequency \eqn{\geq 5}) and
+hard-capped at 20 to limit sparse-cell inflation. Pass an explicit
+integer to override.
+}
+
+\section{No external dependencies}{
+
+Discretisation and MI estimation are handled by internal helpers, so
+\pkg{infotheo} is not required.
+}
+
+\examples{
+set.seed(1)
+n_samples <- 60
+genes     <- paste0("G", 1:200)
+expr      <- matrix(
+  rnorm(n_samples * length(genes)),
+  nrow     = n_samples,
+  dimnames = list(NULL, genes)
+)
+phenotype <- sample(c("case", "ctrl"), n_samples, replace = TRUE)
+gene_sets <- list(
+  pathway_A = genes[1:30],
+  pathway_B = genes[50:120],
+  pathway_C = genes[150:200]
+)
+
+res <- run_info_assoc(
+  expr      = expr,
+  phenotype = phenotype,
+  gene_sets = gene_sets,
+  n_perm    = 200,
+  seed      = 42
+)
+head(res)
+
+}
+\references{
+Paninski, L. (2003). Estimation of entropy and mutual information.
+\emph{Neural Computation}, 15(6), 1191–1253.
+}
+\seealso{
+\code{\link[=run_info_enrichment]{run_info_enrichment()}} for the gene-list (ORA) flavour,
+\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA,
+\code{\link[=run_conditional_enrichment]{run_conditional_enrichment()}} for ridge-regularised redundancy.
 }

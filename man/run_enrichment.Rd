@@ -17,7 +17,8 @@ run_enrichment(
   adaptive_mode = c("pvalue", "decision", "refine"),
   eps = 0.01,
   alpha = 0.05,
-  seed = NULL
+  seed = NULL,
+  keep_trace = FALSE
 )
 }
 \arguments{
@@ -35,7 +36,10 @@ run_enrichment(
 
 \item{n_perm}{Integer. Number of permutations for empirical p-value (GSEA only).}
 
-\item{alternative}{Character. Specifies the alternative hypothesis: "greater", "less", or "two.sided".}
+\item{alternative}{Character. Specifies the alternative hypothesis: "greater", "less",
+or "two.sided". For the hypergeometric method, "two.sided" delegates to
+\code{\link[stats:fisher.test]{stats::fisher.test()}} rather than \code{\link[stats:Hypergeometric]{stats::phyper()}}, which may give slightly
+different results than doubling the one-sided p-value.}
 
 \item{adaptive}{Logical. If TRUE, uses early stopping for permutation tests based on convergence.}
 
@@ -46,6 +50,8 @@ run_enrichment(
 \item{alpha}{Numeric. Significance level used for confidence intervals and decision boundaries.}
 
 \item{seed}{Numeric. Optional random seed for reproducibility.}
+
+\item{keep_trace}{Logical. If TRUE function traces all results for permutation based analysis}
 }
 \value{
 A named list with enrichment results.

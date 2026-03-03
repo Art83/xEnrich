@@ -9,23 +9,111 @@ run_info_enrichment(
   gene_sets,
   universe = NULL,
   n_perm = 1000,
+  min_size = 5,
+  max_size = Inf,
   seed = NULL
 )
 }
 \arguments{
-\item{gene_list}{Character vector of user-supplied gene symbols.}
+\item{gene_list}{Character vector of query gene symbols.}
 
-\item{gene_sets}{list of characters with relevant pathways.}
+\item{gene_sets}{Named list of character vectors defining gene set
+membership (e.g. GO terms, pathways).}
 
-\item{universe}{Character vector of all genes in the background set.}
+\item{universe}{Character vector of background genes. If \code{NULL}
+(default), the union of all genes across \code{gene_sets} is used and a
+message is emitted. Supplying an explicit universe is strongly recommended
+for reproducibility.}
 
-\item{n_perm}{Number of permutations for null model.}
+\item{n_perm}{Integer. Number of hypergeometric draws used to build the
+permutation null for \code{emp_p} and \code{z_score}. Default \code{1000}.}
 
-\item{seed}{Optional random seed for reproducibility.}
+\item{min_size}{Integer. Gene sets with fewer than \code{min_size} members
+after intersection with \code{universe} are silently dropped. Default
+\code{5}.}
+
+\item{max_size}{Integer. Gene sets with more than \code{max_size} members
+after intersection with \code{universe} are silently dropped. Defaults to
+\code{Inf} (no upper limit). Note that MI naturally down-weights large,
+uninformative sets, so filtering is a computational convenience rather
+than a mathematical necessity.}
+
+\item{seed}{Optional integer passed to \code{\link[=set.seed]{set.seed()}} for reproducible
+permutations. \code{NULL} (default) leaves the RNG state untouched.}
 }
 \value{
-A dataframe with results
+A data frame with one row per gene set (after size filtering),
+containing:
+\describe{
+\item{\code{set}}{Gene set name.}
+\item{\code{overlap}}{Number of query genes in the set (\emph{k}).}
+\item{\code{set_size}}{Gene set size after universe intersection (\emph{m}).}
+\item{\code{list_size}}{Query list size after universe intersection (\emph{n}).}
+\item{\code{universe_size}}{Background size (\emph{N}).}
+\item{\code{expected}}{Expected overlap under the null (\code{n * m / N}).}
+\item{\code{ratio}}{Observed / expected overlap ratio.}
+\item{\code{info_bits}}{Mutual information I(list ; set) in bits.}
+\item{\code{signed_bits}}{Signed MI: positive when \code{overlap > expected}
+(enrichment), negative when below (depletion). The sign is derived from
+the direction of overlap, not from MI itself, which is always
+non-negative.}
+\item{\code{z_score}}{Standard scores of \code{info_bits} relative to the
+permutation null. \code{NA} when null standard deviation is zero.}
+\item{\code{emp_p}}{Empirical p-value: proportion of null bits >=
+observed, with a +1 / (n_perm + 1) continuity correction.}
+\item{\code{p_enrich}}{Exact hypergeometric enrichment p-value.}
+\item{\code{p_deplete}}{Exact hypergeometric depletion p-value.}
+\item{\code{null_mean}, \code{null_sd}}{Mean and SD of the permutation
+null bits distribution.}
+\item{\code{padj_enrich}, \code{padj_deplete}, \code{padj_emp}}{BH-adjusted
+versions of the corresponding p-values.}
+}
 }
 \description{
-Run enrichment analysis using information theory
+Scores gene sets by mutual information (MI) between gene list membership
+and pathway membership, rather than by raw overlap count alone. This
+addresses a known limitation of classical over-representation analysis
+(ORA): large gene sets can achieve highly significant hypergeometric
+p-values through sheer size even when the overlap is biologically
+unspecific. MI naturally penalises uninformative sets because when a
+pathway covers a large fraction of the universe, membership conveys little
+information and \code{info_bits} approaches zero.
+}
+\details{
+Two complementary p-values are returned:
+\describe{
+\item{\code{p_enrich}}{Exact one-sided hypergeometric p-value on the
+overlap count \emph{k}. Comparable to standard ORA tools.}
+\item{\code{emp_p}}{Empirical p-value derived from a permutation null on
+\emph{information bits}. Ranks pathways by how surprising their MI is,
+not just their overlap size.}
+}
+When the two measures disagree, the disagreement is itself informative:
+a set with low \code{p_enrich} but high \code{emp_p} is large and overlaps
+by expectation; a set with high \code{p_enrich} but low \code{emp_p} is
+small yet unusually precise. Users may sort by either depending on their
+question.
+}
+\examples{
+universe <- paste0("G", 1:500)
+gene_list <- sample(universe, 50)
+gene_sets <- list(
+  pathway_A = sample(universe, 30),
+  pathway_B = sample(universe, 100),
+  pathway_C = sample(universe, 10)
+)
+
+res <- run_info_enrichment(
+  gene_list = gene_list,
+  gene_sets = gene_sets,
+  universe  = universe,
+  n_perm    = 500,
+  seed      = 42
+)
+head(res[order(res$emp_p), ])
+
+}
+\seealso{
+\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA, \code{\link[=run_conditional_enrichment]{run_conditional_enrichment()}}
+for the ridge-regularised redundancy approach.
 }

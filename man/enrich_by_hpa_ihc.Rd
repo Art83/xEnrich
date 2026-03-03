@@ -73,6 +73,6 @@ A data frame containing enrichment results for each group.
 }
 \description{
 Applies enrichment testing (GSEA or hypergeometric) across multiple groups
-(e.g., tissues, brain regions, or cell types) using Human Protein Atlas (HPA)
+(e.g., tissues, or cell types) using Human Protein Atlas (HPA)
 Immunohistochemistry (IHC) data.
 }
