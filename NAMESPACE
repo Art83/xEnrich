@@ -2,6 +2,7 @@
 
 export(build_expression_heatmap)
 export(enrich_by_celltype)
+export(enrich_by_hpa_ihc)
 export(enrich_by_ihc)
 export(enrich_by_region)
 export(enrich_by_tissue)

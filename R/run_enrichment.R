@@ -7,12 +7,16 @@
 #' @param gene_stats Numeric vector. Required if method = "gsea". Named numeric vector of gene scores.
 #' @param gsea_weight Numeric. Exponent for GSEA running sum (default = 1).
 #' @param n_perm Integer. Number of permutations for empirical p-value (GSEA only).
-#' @param alternative Character. Specifies the alternative hypothesis: "greater", "less", or "two.sided".
+#' @param alternative Character. Specifies the alternative hypothesis: "greater", "less",
+#'   or "two.sided". For the hypergeometric method, "two.sided" delegates to
+#'   [stats::fisher.test()] rather than [stats::phyper()], which may give slightly
+#'   different results than doubling the one-sided p-value.
 #' @param adaptive Logical. If TRUE, uses early stopping for permutation tests based on convergence.
 #' @param adaptive_mode Character. Mode for early stopping: "pvalue", "decision", or "refine".
 #' @param eps Numeric. The relative standard error threshold for early stopping when adaptive_mode = "pvalue".
 #' @param alpha Numeric. Significance level used for confidence intervals and decision boundaries.
 #' @param seed Numeric. Optional random seed for reproducibility.
+#' @param keep_trace Logical. If TRUE function traces all results for permutation based analysis
 #'
 #' @return A named list with enrichment results.
 #' @export
@@ -29,13 +33,16 @@ run_enrichment <- function(
     adaptive_mode = c("pvalue", "decision", "refine"),
     eps = 0.01,
     alpha=0.05,
-    seed = NULL
+    seed = NULL,
+    keep_trace = FALSE
 ) {
   ##---------------- Preprocessing, matching arguments-----------
   method <- match.arg(method)
   alternative <- match.arg(alternative)
   adaptive_mode <- match.arg(adaptive_mode)
-
+  if (!adaptive && !missing(adaptive_mode)) {
+    warning("'adaptive_mode' is ignored when adaptive = FALSE.")
+  }
   if (is.null(gene_list) || length(gene_list) == 0) stop("gene_list must not be empty.")
   gene_list <- intersect(gene_list, universe)
   if (length(gene_list) == 0) stop("After intersecting with universe, gene_list is empty.")
@@ -118,45 +125,18 @@ run_enrichment <- function(
       input_set_size = length(gene_list),
       universe_size = length(universe),
       universe_size_used = N_used,
-      leading_edge = I(list(character(0)))
+      #leading_edge = I(list(character(0)))
+      leading_edge = character(0)
     ))
   }
 
   # Weighting
   w_base <- abs(ranked_genes)^gsea_weight
 
-  compute_es <- function(hit_mask) {
-    denom <- sum(w_base[hit_mask])
-    n_miss <- N_used - sum(hit_mask)
-    if (denom <= 0 || n_miss <= 0) return(0)
-
-    step_hit <- numeric(N_used)
-    step_miss <- numeric(N_used)
-
-    step_hit[hit_mask] <- w_base[hit_mask] / denom
-    step_miss[!hit_mask] <- 1 / n_miss
-
-    rs <- cumsum(step_hit - step_miss)
-    ES_pos <- max(rs)
-    ES_neg <- min(rs)
-    if (abs(ES_pos) > abs(ES_neg)) ES_pos else ES_neg
-  }
-
-  ES <- compute_es(hits)
+  ES <- .compute_es(hits, w_base, N_used)
 
   # Permutation-based p-value
-  perm_fun <- function() {
-    random_idx <- sample.int(N_used, Nh, replace = FALSE)
-    hit_mask <- logical(N_used)
-    hit_mask[random_idx] <- TRUE
-    compute_es(hit_mask)
-  }
-
-  count_extreme <- function(Tb, obs) {
-    if (alternative == "greater") sum(Tb >= obs)
-    else if (alternative == "less") sum(Tb <= obs)
-    else sum(abs(Tb) >= abs(obs))
-  }
+  perm_fun <- .make_perm_fun(w_base, N_used, Nh)
 
   ##----------------------Inference-----------------------
   pval <- NA_real_
@@ -164,7 +144,7 @@ run_enrichment <- function(
 
   if (!adaptive) {
     perm_ES <- replicate(n_perm, perm_fun())
-    k0 <- count_extreme(perm_ES, ES)
+    k0 <- .count_extreme(perm_ES, ES, alternative = alternative)
     B0 <- n_perm
     inf_fixed <- .permutation_inference(
       k_extreme = k0,
@@ -182,7 +162,8 @@ run_enrichment <- function(
         obs_stat   = ES,
         perm_fun   = perm_fun,
         alternative = alternative,
-        eps        = eps
+        eps        = eps,
+        keep_trace = keep_trace
       )
       pval <- res$p
       inference <- list(
@@ -194,7 +175,8 @@ run_enrichment <- function(
         obs_stat    = ES,
         perm_fun    = perm_fun,
         alternative = alternative,
-        alpha = alpha
+        alpha = alpha,
+        keep_trace = keep_trace
       )
       pval <- res$p
       inference <- list(
@@ -204,7 +186,7 @@ run_enrichment <- function(
     } else if (adaptive_mode == "refine") {
       # do an initial fixed run then refine only if borderline
       perm_ES <- replicate(n_perm, perm_fun())
-      k0 <- count_extreme(perm_ES, ES)
+      k0 <- .count_extreme(perm_ES, ES, alternative = alternative)
       B0 <- n_perm
 
       inf_fixed <- .permutation_inference(k_extreme = k0, n_perm = B0, alpha=alpha)
@@ -223,7 +205,8 @@ run_enrichment <- function(
           k0 = k0,
           B0 = B0,
           alternative = alternative,
-          alpha = alpha
+          alpha = alpha,
+          keep_trace = keep_trace
         )
         pval <- res$p
         inference <- c(list(
@@ -267,7 +250,8 @@ run_enrichment <- function(
     input_set_size = length(gene_list),
     universe_size = length(universe),
     universe_size_used = N_used,
-    leading_edge = I(list(leading_edge)),
+    #leading_edge = I(list(leading_edge)),
+    leading_edge = leading_edge,
     inference = inference
   ))
 }
@@ -283,7 +267,8 @@ run_enrichment <- function(
     min_perm = 200,
     max_perm = 1e5,
     batch = 200,
-    verbose = FALSE
+    verbose = FALSE,
+    keep_trace = FALSE
 ) {
   alternative <- match.arg(alternative)
 
@@ -292,7 +277,7 @@ run_enrichment <- function(
   B <- 0L   # total permutations
 
   # Optional trace for diagnostics / plotting later
-  trace <- list(B = integer(), p_hat = numeric(), RSE = numeric())
+  if(keep_trace) trace <- list(B = integer(), p_hat = numeric(), RSE = numeric())
 
   repeat {
 
@@ -302,20 +287,14 @@ run_enrichment <- function(
     B <- B + length(Tb)
 
     # --- update extreme count ---
-    if (alternative == "greater") {
-      k <- k + sum(Tb >= obs_stat)
-    } else if (alternative == "less") {
-      k <- k + sum(Tb <= obs_stat)
-    } else {  # two.sided
-      k <- k + sum(abs(Tb) >= abs(obs_stat))
-    }
+    k <- k + .count_extreme(Tb, obs_stat, alternative)
 
     # --- p-value estimate with +1 correction ---
     p_hat <- (k + 1) / (B + 1)
 
     # --- Monte Carlo precision ---
     SE  <- sqrt(p_hat * (1 - p_hat) / B)
-    RSE <- SE / p_hat
+    RSE <- if (p_hat > 0) SE / p_hat else Inf
 
     if (verbose) {
       message(
@@ -326,10 +305,11 @@ run_enrichment <- function(
       )
     }
 
-    # Store trace (cheap, optional)
-    trace$B     <- c(trace$B, B)
-    trace$p_hat <- c(trace$p_hat, p_hat)
-    trace$RSE   <- c(trace$RSE, RSE)
+    if(keep_trace){
+      trace$B     <- c(trace$B, B)
+      trace$p_hat <- c(trace$p_hat, p_hat)
+      trace$RSE   <- c(trace$RSE, RSE)
+    }
 
     # --- stopping rules ---
     if (B >= min_perm && RSE < eps) {
@@ -340,15 +320,15 @@ run_enrichment <- function(
       break
     }
   }
-
-  list(
+  result <- list(
     p = p_hat,
     k = k,
     B = B,
     RSE = RSE,
-    converged = (RSE < eps),
-    trace = trace
+    converged = (RSE < eps)
   )
+  if(keep_trace) result$trace <- trace
+  result
 }
 
 
@@ -360,13 +340,17 @@ run_enrichment <- function(
                                alpha = 0.05,
                                B_min = 100,
                                B_max = 20000,
-                               batch_size = 50) {
+                               batch_size = 50,
+                               keep_trace = FALSE) {
 
   alternative <- match.arg(alternative)
 
   B <- 0L
   k <- 0L
-  trace <- list()
+  if(keep_trace) trace <- list()
+
+  ci <- NULL
+  decision <- "borderline"
 
   repeat {
 
@@ -375,15 +359,7 @@ run_enrichment <- function(
     B <- B + batch_size
 
     # update extreme count
-    k_batch <- if (alternative == "greater") {
-      sum(perm_stats >= obs_stat)
-    } else if (alternative == "less") {
-      sum(perm_stats <= obs_stat)
-    } else {
-      sum(abs(perm_stats) >= abs(obs_stat))
-    }
-
-    k <- k + k_batch
+    k <- k + .count_extreme(perm_stats, obs_stat, alternative)
 
     if (B >= B_min) {
 
@@ -394,7 +370,8 @@ run_enrichment <- function(
 
       decision <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
 
-      trace[[length(trace) + 1]] <- list(
+      if(keep_trace){
+        trace[[length(trace) + 1]] <- list(
         B = B,
         k = k,
         p_hat = (k + 1) / (B + 1),
@@ -402,6 +379,7 @@ run_enrichment <- function(
         ci_high = ci$upper,
         decision = decision
       )
+      }
 
       # stop if decision resolved
       if (decision != "borderline") break
@@ -411,17 +389,14 @@ run_enrichment <- function(
   }
 
   # final values
+  if (is.null(ci)) ci <- .wilson_ci(x = k+1, n = B+1)
   p_hat <- (k + 1) / (B + 1)
   mc_se <- sqrt(p_hat * (1 - p_hat) / B)
 
-  ci <- .wilson_ci(
-    x = k+1,
-    n = B+1
-  )
 
-  decision_alpha <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
+  decision_alpha <- decision
 
-  list(
+  result <- list(
     p = p_hat,
     B = B,
     k = k,
@@ -429,9 +404,10 @@ run_enrichment <- function(
     p_ci_low = ci$lower,
     p_ci_high = ci$upper,
     decision_alpha = decision_alpha,
-    converged = (decision_alpha != "borderline"),
-    trace = trace
+    converged = (decision_alpha != "borderline")
   )
+  if(keep_trace) result$trace <- trace
+  result
 }
 
 
@@ -445,12 +421,16 @@ run_enrichment <- function(
                                       alternative = c("greater", "less", "two.sided"),
                                       alpha = 0.05,
                                       B_max = 20000,
-                                      batch_size = 50) {
+                                      batch_size = 50,
+                                      keep_trace = FALSE) {
 
   alternative <- match.arg(alternative)
   B <- as.integer(B0)
   k <- as.integer(k0)
-  trace <- list()
+  if(keep_trace) trace <- list()
+
+  ci <- .wilson_ci(x = k + 1, n = B + 1)
+  decision <- "borderline"
 
   repeat {
 
@@ -459,15 +439,7 @@ run_enrichment <- function(
     perm_stats <- replicate(batch_size, perm_fun())
     B <- B + batch_size
 
-    k_batch <- if (alternative == "greater") {
-      sum(perm_stats >= obs_stat)
-    } else if (alternative == "less") {
-      sum(perm_stats <= obs_stat)
-    } else {
-      sum(abs(perm_stats) >= abs(obs_stat))
-    }
-
-    k <- k + k_batch
+    k <- k + .count_extreme(perm_stats, obs_stat, alternative)
 
     ci <- .wilson_ci(
       x = k+1,
@@ -476,37 +448,32 @@ run_enrichment <- function(
 
     decision <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
 
-    trace[[length(trace) + 1]] <- list(
-      B = B,
-      k = k,
-      p_hat = (k + 1) / (B + 1),
-      ci_low = ci$lower,
-      ci_high = ci$upper,
-      decision = decision
-    )
-
+    if(keep_trace) {
+      trace[[length(trace) + 1]] <- list(
+        B = B,
+        k = k,
+        p_hat = (k + 1) / (B + 1),
+        ci_low = ci$lower,
+        ci_high = ci$upper,
+        decision = decision
+      )
+    }
     if (decision != "borderline") break
   }
 
   p_hat <- (k + 1) / (B + 1)
 
-  ci <- .wilson_ci(
-    x = k+1,
-    n = B+1
-  )
-
-  decision_alpha <- .decision_from_ci(ci_low = ci$lower, ci_high = ci$upper, alpha = alpha)
-
-  list(
+  result <- list(
     p = p_hat,
     B = B,
     k = k,
     p_ci_low = ci$lower,
     p_ci_high = ci$upper,
-    decision_alpha = decision_alpha,
-    converged = (decision_alpha != "borderline"),
-    trace = trace
+    decision_alpha = decision,
+    converged = (decision != "borderline")
   )
+  if(keep_trace) result$trace <- trace
+  result
 }
 
 #' @noRd
@@ -525,7 +492,7 @@ run_enrichment <- function(
 
   list(
     k_extreme = k_extreme,
-    n_permb = n_perm,
+    n_perm = n_perm,
     p_hat = p_hat,
     p_ci_low = ci$lower,
     p_ci_high = ci$upper,
@@ -555,3 +522,42 @@ run_enrichment <- function(
   list(lower = max(0, centre - half), upper = min(1, centre + half))
 }
 
+#' @noRd
+#' @keywords internal
+.count_extreme <- function(Tb, obs, alternative = c("greater", "less", "two.sided")) {
+  alternative <- match.arg(alternative)
+  if (alternative == "greater") sum(Tb >= obs)
+  else if (alternative == "less") sum(Tb <= obs)
+  else sum(abs(Tb) >= abs(obs))
+}
+
+#' @noRd
+#' @keywords internal
+.make_perm_fun <- function(w_base, N_used, Nh) {
+  force(w_base); force(N_used); force(Nh)  # avoid lazy eval surprises
+  function() {
+    random_idx <- sample.int(N_used, Nh, replace = FALSE)
+    hit_mask <- logical(N_used)
+    hit_mask[random_idx] <- TRUE
+    .compute_es(hit_mask, w_base, N_used)
+  }
+}
+
+#' @noRd
+#' @keywords internal
+.compute_es <- function(hit_mask,w_base, N_used) {
+  denom <- sum(w_base[hit_mask])
+  n_miss <- N_used - sum(hit_mask)
+  if (denom <= 0 || n_miss <= 0) return(0)
+
+  step_hit <- numeric(N_used)
+  step_miss <- numeric(N_used)
+
+  step_hit[hit_mask] <- w_base[hit_mask] / denom
+  step_miss[!hit_mask] <- 1 / n_miss
+
+  rs <- cumsum(step_hit - step_miss)
+  ES_pos <- max(rs)
+  ES_neg <- min(rs)
+  if (abs(ES_pos) > abs(ES_neg)) ES_pos else ES_neg
+}
