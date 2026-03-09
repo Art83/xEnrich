@@ -1,20 +1,29 @@
-#' Group-wise RNA Expression Enrichment Analysis
+#' Cell-type enrichment analysis using Tabula Sapiens scRNA data
 #'
-#' Applies enrichment testing across multiple groups (e.g. tissues, brain
-#' regions, immune cell types) using Human Protein Atlas (HPA) RNA expression
-#' data. Expression values are aggregated per gene per group and used either
-#' directly as GSEA rankings or discretised for hypergeometric testing.
+#' Applies enrichment testing across cell types within a single Tabula Sapiens
+#' organ dataset. Genes are filtered by minimum expression prevalence
+#' (\code{PctExpr}) before enrichment, reducing noise from genes detected in
+#' only a handful of cells. Expression values (\code{MeanLogNorm}) are used
+#' either directly as GSEA rankings or discretised for hypergeometric testing.
+#'
+#' This function is designed as the second step of the location-aware
+#' pipeline: after [enrich_by_hpa_ihc()] or [enrich_by_hpa()] identifies
+#' enriched organs, [enrich_by_tabula()] resolves which cell types within
+#' those organs drive the signal. Use [run_location_pipeline()] to run both
+#' steps automatically.
+#'
+#' @section PctExpr filtering:
+#' \code{PctExpr} is the fraction of cells in a cell type that express a
+#' given gene (expression > 0). Genes below \code{min_pct_expr} are removed
+#' from the background for that cell type before enrichment. This prevents
+#' \code{MeanLogNorm} values inflated by a few outlier cells from entering
+#' the analysis. A value of \code{0.1} (10\% of cells) is a standard
+#' threshold in scRNA analysis.
 #'
 #' @param gene_list Character vector of gene symbols (the query set).
-#' @param reference_df Data frame of HPA RNA expression data. Must contain a
-#'   \code{Gene} column, a grouping column, and an expression value column.
-#' @param group_col Character scalar. Column to group by. Auto-detected from
-#'   \code{c("Brain.region", "Subregion", "Immune.cell", "Tissue")} if not
-#'   supplied.
-#' @param expression_col Character scalar. Expression value column. Auto-
-#'   detected from \code{c("pTPM", "nTPM", "TPM", "Tags.per.million",
-#'   "Scaled.tags.per.million", "Normalized.tags.per.million")} if not
-#'   supplied.
+#' @param reference_df Data frame of Tabula Sapiens expression data for one
+#'   organ. Must contain columns \code{GeneSymbol}, \code{CellType},
+#'   \code{MeanLogNorm}, and \code{PctExpr}.
 #' @param method Character. \code{"hypergeometric"} (default) or \code{"gsea"}.
 #' @param cutoff_type Character. How to discretise expression for the
 #'   hypergeometric test:
@@ -27,21 +36,25 @@
 #'       (\code{cutoff_value} must be a positive integer).}
 #'   }
 #'   Ignored when \code{method = "gsea"}.
-#' @param cutoff_value Numeric. Threshold value interpreted according to
-#'   \code{cutoff_type}. Default \code{0.9} (suitable for
-#'   \code{"threshold"} and \code{"quantile"}; set an integer for
-#'   \code{"top_k"}).
+#' @param cutoff_value Numeric. Threshold interpreted per \code{cutoff_type}.
+#'   Default \code{0.3} (log-normalised expression; suitable for
+#'   \code{"threshold"}).
+#' @param min_pct_expr Numeric in \[0, 1\]. Minimum fraction of cells in a
+#'   cell type that must express a gene for it to be included in the
+#'   background. Default \code{0.1}. Set to \code{0} to disable.
 #' @param universe Optional character vector. Required when
 #'   \code{universe_type = "provided"}.
 #' @param universe_type Character. Background gene universe construction:
 #'   \describe{
-#'     \item{\code{"global"}}{All unique genes in \code{reference_df}.}
-#'     \item{\code{"group"}}{Only genes measured within the group being tested.}
+#'     \item{\code{"global"}}{All genes passing \code{min_pct_expr} across
+#'       all cell types in \code{reference_df}.}
+#'     \item{\code{"group"}}{Only genes passing \code{min_pct_expr} within
+#'       the cell type being tested.}
 #'     \item{\code{"provided"}}{Use \code{universe} directly.}
 #'   }
 #' @param min_overlap Integer. Minimum overlap between \code{gene_list} and
-#'   the group universe. Groups below this threshold are silently skipped.
-#'   Default \code{1}.
+#'   the cell-type universe. Cell types below this threshold are silently
+#'   skipped. Default \code{1}.
 #' @param min_background Integer. Minimum background size to attempt
 #'   enrichment. Default \code{10}.
 #' @param gene_stats Optional named numeric vector. Used only when
@@ -53,22 +66,20 @@
 #'   GSEA (\code{n_perm}, \code{gsea_weight}, \code{adaptive},
 #'   \code{adaptive_mode}, \code{alpha}, \code{eps}).
 #'
-#' @return A data frame with one row per group that passed filters, containing
-#'   enrichment results and a \code{padj} column (BH adjustment across groups).
-#'   Returns an empty data frame if no groups pass.
+#' @return A data frame with one row per cell type that passed filters,
+#'   containing enrichment results and a \code{padj} column (BH adjustment
+#'   across cell types). Returns an empty data frame if no cell types pass.
 #'
-#' @seealso [run_enrichment()], [enrich_by_hpa_ihc()]
+#' @seealso [run_location_pipeline()], [enrich_by_hpa_ihc()],
+#'   [enrich_by_hpa()]
 #' @export
-enrich_by_hpa <- function(
+enrich_by_tabula <- function(
     gene_list,
     reference_df,
-    group_col      = c("Brain.region", "Subregion", "Immune.cell", "Tissue"),
-    expression_col = c("pTPM", "nTPM", "TPM", "Tags.per.million",
-                       "Scaled.tags.per.million",
-                       "Normalized.tags.per.million"),
     method         = c("hypergeometric", "gsea"),
-    cutoff_type    = c("threshold", "quantile", "top_k"),
+    cutoff_type    = c("quantile", "threshold", "top_k"),
     cutoff_value   = 0.9,
+    min_pct_expr   = 0.1,
     universe       = NULL,
     universe_type  = c("global", "group", "provided"),
     min_overlap    = 1L,
@@ -79,50 +90,34 @@ enrich_by_hpa <- function(
     ...
 ) {
   # --- Argument matching ------------------------------------------------------
+  method        <- match.arg(method)
+  cutoff_type   <- match.arg(cutoff_type)
+  universe_type <- match.arg(universe_type)
+  alternative   <- match.arg(alternative)
+
+  # --- Input validation -------------------------------------------------------
   if (!is.data.frame(reference_df))
     stop("`reference_df` must be a data frame.")
 
-  method        <- match.arg(method)
-  universe_type <- match.arg(universe_type)
-  alternative   <- match.arg(alternative)
-  cutoff_type   <- match.arg(cutoff_type)
-
-  # Auto-detect group_col and expression_col from available columns
-  group_col      <- if (length(group_col) > 1L) {
-    .resolve_col(group_col, reference_df, "group_col")
-  } else {
-    match.arg(group_col,
-              choices = c("Brain.region", "Subregion",
-                          "Immune.cell", "Tissue"))
-  }
-
-  expression_col <- if (length(expression_col) > 1L) {
-    .resolve_col(expression_col, reference_df, "expression_col")
-  } else {
-    match.arg(expression_col,
-              choices = c("pTPM", "nTPM", "TPM", "Tags.per.million",
-                          "Scaled.tags.per.million",
-                          "Normalized.tags.per.million"))
-  }
-
-  # --- Column presence checks -------------------------------------------------
-  required_cols <- c("Gene", group_col, expression_col)
+  required_cols <- c("GeneSymbol", "CellType", "MeanLogNorm", "PctExpr")
   missing_cols  <- setdiff(required_cols, colnames(reference_df))
   if (length(missing_cols) > 0L)
     stop("Columns missing from `reference_df`: ",
-         paste(missing_cols, collapse = ", "), ".")
+         paste(missing_cols, collapse = ", "),
+         ". Are you passing a Tabula Sapiens dataset from load_reference()?")
 
-  # --- Scalar argument checks -------------------------------------------------
-  if (!is.null(universe) &&
-      (!is.character(universe) || length(universe) == 0L))
-    stop("`universe` must be a non-empty character vector.")
-  if (universe_type == "provided" && is.null(universe))
-    stop("`universe_type = 'provided'` but `universe` is NULL.")
+  if (!is.numeric(min_pct_expr) || min_pct_expr < 0 || min_pct_expr > 1)
+    stop("`min_pct_expr` must be a number in [0, 1].")
   if (!is.numeric(min_overlap) || length(min_overlap) != 1L || min_overlap < 1)
     stop("`min_overlap` must be a single integer >= 1.")
   if (!is.numeric(min_background) || length(min_background) != 1L ||
       min_background < 1)
     stop("`min_background` must be a single integer >= 1.")
+  if (universe_type == "provided" && is.null(universe))
+    stop("`universe_type = 'provided'` but `universe` is NULL.")
+  if (!is.null(universe) &&
+      (!is.character(universe) || length(universe) == 0L))
+    stop("`universe` must be a non-empty character vector.")
 
   # --- Cutoff checks ----------------------------------------------------------
   if (cutoff_type == "quantile" && (cutoff_value <= 0 || cutoff_value >= 1))
@@ -161,39 +156,57 @@ enrich_by_hpa <- function(
       stop("`gene_stats` must be a named numeric vector.")
   }
 
-  # --- Universe construction --------------------------------------------------
+  # --- Remove NA expression ---------------------------------------------------
+  reference_df <- reference_df[!is.na(reference_df$MeanLogNorm), ]
+  if (nrow(reference_df) == 0L)
+    stop("No rows remain after removing NA values in MeanLogNorm.")
+
+  # --- PctExpr filter ---------------------------------------------------------
+  # Applied globally before splitting so the universe reflects
+  # genuinely detectable genes only. The cutoff then selects the
+  # highly-expressed subset within each cell type's own distribution.
+  if (min_pct_expr > 0) {
+    reference_df <- reference_df[reference_df$PctExpr >= min_pct_expr, ]
+    if (nrow(reference_df) == 0L)
+      stop("No rows remain after PctExpr filtering (min_pct_expr = ",
+           min_pct_expr, "). Consider lowering this threshold.")
+  }
+
+  # --- Global universe --------------------------------------------------------
   global_universe <- switch(
     universe_type,
-    global   = unique(reference_df$Gene),
+    global   = unique(reference_df$GeneSymbol),
     provided = {
-      u       <- intersect(universe, unique(reference_df$Gene))
+      u       <- intersect(universe, unique(reference_df$GeneSymbol))
       dropped <- length(universe) - length(u)
       if (dropped > 0L)
         message(dropped, " of ", length(universe),
-                " provided universe genes absent from reference_df. Excluded.")
+                " provided universe genes absent from reference_df.Excluded.")
       if (length(u) == 0L)
-        stop("Provided universe has no overlap with reference_df$Gene.")
+        stop("Provided universe has no overlap with reference_df$GeneSymbol.")
       u
     },
-    NULL   # "group": determined per group below
+    NULL   # "group": determined per cell type below
   )
 
-  # --- Per-group loop ---------------------------------------------------------
-  group_list   <- split(reference_df, reference_df[[group_col]])
+  # --- Per cell-type loop -----------------------------------------------------
+  cell_types   <- unique(reference_df$CellType)
+  ct_list      <- split(reference_df, reference_df$CellType)
 
-  results_list <- lapply(names(group_list), function(group_name) {
-    ref_group        <- group_list[[group_name]]
+  results_list <- lapply(names(ct_list), function(ct_name) {
+    ct_df            <- ct_list[[ct_name]]
     current_universe <- if (universe_type == "group") {
-      unique(ref_group$Gene)
+      unique(ct_df$GeneSymbol)
     } else {
       global_universe
     }
-    ref_group <- ref_group[ref_group$Gene %in% current_universe, ]
 
-    # Derive per-gene mean expression (used for GSEA ranking or cutoff)
-    genes_in_group <- unique(ref_group$Gene)
-    local_stats <- vapply(genes_in_group, function(g) {
-      mean(ref_group[[expression_col]][ref_group$Gene == g], na.rm = TRUE)
+    ct_df <- ct_df[ct_df$GeneSymbol %in% current_universe, ]
+
+    # Per-gene mean MeanLogNorm within this cell type
+    genes_in_ct  <- unique(ct_df$GeneSymbol)
+    local_stats  <- vapply(genes_in_ct, function(g) {
+      mean(ct_df$MeanLogNorm[ct_df$GeneSymbol == g], na.rm = TRUE)
     }, numeric(1L))
     local_stats      <- local_stats[names(local_stats) %in% current_universe]
     current_universe <- intersect(current_universe, names(local_stats))
@@ -201,7 +214,7 @@ enrich_by_hpa <- function(
     if (length(local_stats) < min_background) return(NULL)
     if (length(current_universe) == 0L)       return(NULL)
 
-    # Override with user-supplied stats for gsea + provided
+    # Override with user stats for gsea + provided
     if (method == "gsea" && universe_type == "provided") {
       local_stats      <- gene_stats[names(gene_stats) %in% current_universe]
       current_universe <- intersect(current_universe, names(local_stats))
@@ -249,9 +262,9 @@ enrich_by_hpa <- function(
 
     if (is.null(res)) return(NULL)
 
-    # Flatten to one-row data frame safely
+    # Safe row construction
     row <- data.frame(
-      group          = group_name,
+      cell_type      = ct_name,
       method         = res$method,
       p_value        = res$p_value,
       overlap        = res$overlap,
@@ -259,7 +272,6 @@ enrich_by_hpa <- function(
       universe_size  = res$universe_size,
       stringsAsFactors = FALSE
     )
-    row[[group_col]] <- group_name
 
     if (res$method == "hypergeometric") {
       row$fold_change <- res$fold_change
@@ -275,38 +287,11 @@ enrich_by_hpa <- function(
   # --- Assemble and adjust ----------------------------------------------------
   results_list <- Filter(Negate(is.null), results_list)
   if (length(results_list) == 0L) {
-    message("No groups passed the filters.")
+    message("No cell types passed the filters.")
     return(data.frame())
   }
 
   out      <- do.call(rbind, results_list)
   out$padj <- p.adjust(out$p_value, method = "BH")
   out[order(out$padj), ]
-}
-
-
-
-#' Auto-detect the first available column from a priority list
-#'
-#' Used to resolve vector-defaulted \code{group_col} and
-#' \code{expression_col} against the actual columns present in
-#' \code{reference_df}. Fails informatively if none are found.
-#'
-#' @param candidates Character vector of column names in priority order.
-#' @param df Data frame to search.
-#' @param arg_name Character scalar. Argument name for error messages.
-#'
-#' @return The first element of \code{candidates} present in
-#'   \code{colnames(df)}.
-#' @keywords internal
-#' @noRd
-.resolve_col <- function(candidates, df, arg_name) {
-  found <- candidates[candidates %in% colnames(df)]
-  if (length(found) == 0L)
-    stop("Could not auto-detect `", arg_name, "`. ",
-         "None of the expected columns (",
-         paste(candidates, collapse = ", "),
-         ") are present in `reference_df`. ",
-         "Supply `", arg_name, "` explicitly.")
-  found[1L]
 }

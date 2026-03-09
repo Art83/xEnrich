@@ -74,7 +74,7 @@ set.}
 }
 \description{
 Addresses a fundamental limitation of enrichment analysis: when many
-pathways are nominally significant, most apparent signal is redundant —
+pathways are nominally significant, most apparent signal is redundant-
 the same genes appearing in multiple overlapping sets. Standard approaches
 (Jaccard clustering, representative selection, ridge penalisation) either
 discard pathways arbitrarily or produce coefficients that are difficult to
@@ -83,8 +83,8 @@ interpret biologically.
 \details{
 This function builds a minimal non-redundant set by greedy forward
 selection on conditional mutual information (CMI). At each step, the
-pathway contributing the most \emph{new} information about the gene list —
-given all previously selected pathways — is chosen. Selection stops when
+pathway contributing the most \emph{new} information about the gene list,
+given all previously selected pathways,is chosen. Selection stops when
 no remaining pathway exceeds \code{min_gain} bits.
 
 The \code{redundancy_ratio} column (\code{conditional_mi / marginal_mi})
@@ -111,7 +111,7 @@ conditioning on each separately) keeps CMI estimation tractable and avoids
 sparse-cell problems as the selected set grows.
 }
 
-\section{Conditioning artifact — synergy}{
+\section{Conditioning artifact, synergy}{
 
 When a large pathway is selected first, the z=0 stratum (genes outside
 it) may be enriched for signal from small independent pathways, causing
@@ -127,9 +127,9 @@ When \code{min_gain = NULL} (default), the threshold is auto-selected as
 the maximum of:
 \itemize{
 \item A \strong{noise floor}: 95th percentile of max marginal MI under
-gene-list permutation — ensures selection is above chance.
+gene-list permutation, ensures selection is above chance.
 \item A \strong{relevance threshold}: \code{fraction * max(marginal MI)}
-— ensures each selected pathway contributes a meaningful fraction of
+ensures each selected pathway contributes a meaningful fraction of
 the dominant signal.
 }
 The relevance threshold is the binding constraint in most real datasets.
@@ -155,14 +155,14 @@ gene_sets <- list(
   pathway_D = universe[200:230]
 )
 
-# gene_list is enriched in A/B region and C — not elsewhere
+# gene_list is enriched in A/B region and C, not elsewhere
 gene_list <- unique(c(
   sample(universe[1:60],    45),
   sample(universe[500:560], 15),
   sample(universe[61:499],   3)
 ))
 
-# Step 1: marginal enrichment — A, B, and C all look significant
+# Step 1: marginal enrichment: A, B, and C all look significant
 mi_res <- run_info_enrichment(
   gene_list = gene_list,
   gene_sets = gene_sets,
@@ -172,7 +172,7 @@ mi_res <- run_info_enrichment(
 )
 print(mi_res[, c("set", "set_size", "info_bits", "emp_p", "padj_emp")])
 
-# Step 2: greedy selection — B is revealed as redundant with A
+# Step 2: greedy selection: B is revealed as redundant with A
 sel <- run_redundancy_selection(
   gene_list      = gene_list,
   gene_sets      = gene_sets,
@@ -199,6 +199,5 @@ Paninski, L. (2003). Estimation of entropy and mutual information.
 \seealso{
 \code{\link[=run_info_enrichment]{run_info_enrichment()}} for marginal MI enrichment scores,
 \code{\link[=run_info_assoc]{run_info_assoc()}} for sample-level phenotype association,
-\code{\link[=run_conditional_enrichment]{run_conditional_enrichment()}} for a ridge-based redundancy alternative,
 \code{\link[=plot_gains]{plot_gains()}} to visualise the selection profile.
 }

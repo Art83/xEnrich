@@ -15,94 +15,91 @@ enrich_by_hpa(
   cutoff_value = 0.9,
   universe = NULL,
   universe_type = c("global", "group", "provided"),
-  min_overlap = 1,
-  min_background = 10,
+  min_overlap = 1L,
+  min_background = 10L,
   gene_stats = NULL,
-  seed = NULL,
   alternative = c("greater", "less", "two.sided"),
+  seed = NULL,
   ...
 )
 }
 \arguments{
-\item{gene_list}{A character vector of gene symbols (the "test set").}
+\item{gene_list}{Character vector of gene symbols (the query set).}
 
-\item{reference_df}{A data frame containing HPA expression data. Must include
-a \code{Gene} column, the column specified in \code{group_col}, and the
-column specified in \code{expression_col}.}
+\item{reference_df}{Data frame of HPA RNA expression data. Must contain a
+\code{Gene} column, a grouping column, and an expression value column.}
 
-\item{group_col}{Character string specifying the column to group by
-(e.g., \code{"Tissue"}, \code{"Brain.region"}). Must be length 1.
-Defaults to the first match among \code{c("Brain.region", "Subregion",
-  "Immune.cell", "Tissue")} found in \code{reference_df}.}
+\item{group_col}{Character scalar. Column to group by. Auto-detected from
+\code{c("Brain.region", "Subregion", "Immune.cell", "Tissue")} if not
+supplied.}
 
-\item{expression_col}{Character string specifying the expression value column
-to use. Must be length 1. Defaults to the first match among
-\code{c("pTPM", "nTPM", "TPM", "Tags.per.million",
-  "Scaled.tags.per.million", "Normalized.tags.per.million")} found in
-\code{reference_df}.}
+\item{expression_col}{Character scalar. Expression value column. Auto-
+detected from \code{c("pTPM", "nTPM", "TPM", "Tags.per.million",
+  "Scaled.tags.per.million", "Normalized.tags.per.million")} if not
+supplied.}
 
-\item{method}{Character string, either \code{"hypergeometric"} or
-\code{"gsea"}.}
+\item{method}{Character. \code{"hypergeometric"} (default) or \code{"gsea"}.}
 
-\item{cutoff_type}{Character string specifying how to discretize expression
-for the hypergeometric test. One of:
-\itemize{
-\item \code{"threshold"}: genes with expression strictly above
-\code{cutoff_value}.
-\item \code{"quantile"}: genes at or above the \code{cutoff_value}
-quantile (must be between 0 and 1).
-\item \code{"top_k"}: the top \code{cutoff_value} genes by expression
-(must be a positive integer).
+\item{cutoff_type}{Character. How to discretise expression for the
+hypergeometric test:
+\describe{
+\item{\code{"threshold"}}{Genes with mean expression strictly above
+\code{cutoff_value}.}
+\item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
+quantile (must be in (0, 1)).}
+\item{\code{"top_k"}}{Top \code{cutoff_value} genes by mean expression
+(\code{cutoff_value} must be a positive integer).}
 }
 Ignored when \code{method = "gsea"}.}
 
-\item{cutoff_value}{Numeric value controlling the cutoff. Interpretation
-depends on \code{cutoff_type} (see above). Default \code{0.9}.}
+\item{cutoff_value}{Numeric. Threshold value interpreted according to
+\code{cutoff_type}. Default \code{0.9} (suitable for
+\code{"threshold"} and \code{"quantile"}; set an integer for
+\code{"top_k"}).}
 
-\item{universe}{Optional character vector defining the gene universe.
-Only used when \code{universe_type = "provided"}.}
+\item{universe}{Optional character vector. Required when
+\code{universe_type = "provided"}.}
 
-\item{universe_type}{Character string defining how the background gene
-universe is constructed:
-\itemize{
-\item \code{"global"}: all unique genes in \code{reference_df}.
-\item \code{"group"}: only genes measured within the specific group
-being tested.
-\item \code{"provided"}: uses the \code{universe} argument directly
-(intersected with genes present in \code{reference_df}).
+\item{universe_type}{Character. Background gene universe construction:
+\describe{
+\item{\code{"global"}}{All unique genes in \code{reference_df}.}
+\item{\code{"group"}}{Only genes measured within the group being tested.}
+\item{\code{"provided"}}{Use \code{universe} directly.}
 }}
 
-\item{min_overlap}{Minimum number of query genes (\code{gene_list}) that
-must overlap the group universe for the group to be tested. Groups below
-this threshold emit a warning but still run; set higher to skip
-low-overlap groups. Default \code{1}.}
+\item{min_overlap}{Integer. Minimum overlap between \code{gene_list} and
+the group universe. Groups below this threshold are silently skipped.
+Default \code{1}.}
 
-\item{min_background}{Minimum size of the background gene set required to
-attempt enrichment. For \code{"hypergeometric"}, this is the number of
-genes in \code{local_stats} after universe filtering; for \code{"gsea"},
-the length of the ranking vector. Groups below this threshold are silently
-skipped. Default \code{10}.}
+\item{min_background}{Integer. Minimum background size to attempt
+enrichment. Default \code{10}.}
 
-\item{gene_stats}{Optional named numeric vector of pre-calculated gene-level
-statistics. Required when \code{method = "gsea"} and
-\code{universe_type = "provided"}; ignored otherwise.}
+\item{gene_stats}{Optional named numeric vector. Used only when
+\code{method = "gsea"} and \code{universe_type = "provided"}.}
 
-\item{seed}{Optional integer seed for reproducibility of GSEA permutations.}
+\item{alternative}{Character. \code{"greater"} (default), \code{"less"},
+or \code{"two.sided"}.}
 
-\item{alternative}{Character string specifying the alternative hypothesis
-for the enrichment test. One of \code{"greater"}, \code{"less"}, or
-\code{"two.sided"}.}
+\item{seed}{Optional integer seed for GSEA permutations.}
 
-\item{...}{Additional named arguments passed to \code{run_enrichment} for
-GSEA (e.g., \code{n_perm}, \code{gsea_weight}, \code{adaptive},
+\item{...}{Additional named arguments passed to \code{\link[=run_enrichment]{run_enrichment()}} for
+GSEA (\code{n_perm}, \code{gsea_weight}, \code{adaptive},
 \code{adaptive_mode}, \code{alpha}, \code{eps}).}
+
+\item{expression_levels}{Not used in this wrapper (HPA RNA uses continuous
+expression; see \code{cutoff_type} instead).}
 }
 \value{
-A data frame of enrichment results, one row per group that passed
-filtering, with a column added for the group name.
+A data frame with one row per group that passed filters, containing
+enrichment results and a \code{padj} column (BH adjustment across groups).
+Returns an empty data frame if no groups pass.
 }
 \description{
-Applies enrichment testing (GSEA or hypergeometric) across multiple groups
-(e.g., tissues, brain regions, subregions or immune cell types) using Human Protein
-Atlas (HPA) RNA expression data.
+Applies enrichment testing across multiple groups (e.g. tissues, brain
+regions, immune cell types) using Human Protein Atlas (HPA) RNA expression
+data. Expression values are aggregated per gene per group and used either
+directly as GSEA rankings or discretised for hypergeometric testing.
+}
+\seealso{
+\code{\link[=run_enrichment]{run_enrichment()}}, \code{\link[=enrich_by_hpa_ihc]{enrich_by_hpa_ihc()}}
 }

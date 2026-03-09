@@ -7,72 +7,81 @@
 enrich_by_hpa_ihc(
   gene_list,
   reference_df,
-  group_col = c("Tissue", "Cell.type"),
-  remove_levels_of_reliability = c("Uncertain"),
+  group_col = "Tissue",
+  remove_levels_of_reliability = "Uncertain",
   method = c("hypergeometric", "gsea"),
   universe = NULL,
   universe_type = c("global", "group", "provided"),
-  min_overlap = 1,
-  min_background = 10,
+  min_overlap = 1L,
+  min_background = 10L,
   gene_stats = NULL,
-  seed = NULL,
   expression_levels = c("Low", "Medium", "High"),
   alternative = c("greater", "less", "two.sided"),
+  seed = NULL,
   ...
 )
 }
 \arguments{
-\item{gene_list}{A character vector of gene symbols (the "test set").}
+\item{gene_list}{Character vector of gene symbols (the query set).}
 
-\item{reference_df}{A data frame containing HPA IHC data. Must include 'Gene'
-and 'Level' columns, as well as the column specified in \code{group_col}.}
+\item{reference_df}{Data frame of HPA IHC data. Must contain columns
+\code{Gene}, \code{Level}, and the column named in \code{group_col}.
+A \code{Reliability} column is used for filtering if present.}
 
-\item{group_col}{Character string specifying the column to group by
-(e.g., "Tissue", "Cell.type"). Defaults to the first element of
-\code{c("Tissue", "Cell.type")}.}
+\item{group_col}{Character scalar. Column to group by (e.g. \code{"Tissue"},
+\code{"Cell.type"}). Default \code{"Tissue"}.}
 
-\item{remove_levels_of_reliability}{Character vector of reliability scores
-to exclude (e.g., "Uncertain").}
+\item{remove_levels_of_reliability}{Character vector of reliability labels
+to exclude. Default \code{"Uncertain"}.}
 
-\item{method}{Character string, either \code{"hypergeometric"} or \code{"gsea"}.}
+\item{method}{Character. \code{"hypergeometric"} (default) or \code{"gsea"}.}
 
-\item{universe}{Optional character vector defining the gene universe.}
+\item{universe}{Optional character vector. Required when
+\code{universe_type = "provided"}.}
 
-\item{universe_type}{Character string defining how the universe is constructed:
-\itemize{
-\item \code{"global"}: All unique genes in \code{reference_df}.
-\item \code{"group"}: Only genes measured within the specific group being tested.
-\item \code{"provided"}: Uses the \code{universe} argument.
+\item{universe_type}{Character. How to construct the per-group background:
+\describe{
+\item{\code{"global"}}{All unique genes in \code{reference_df}.}
+\item{\code{"group"}}{Only genes measured within the group being tested.}
+\item{\code{"provided"}}{Use the \code{universe} argument directly.}
 }}
 
-\item{min_overlap}{Minimum number of query genes that must overlap the
-universe for a group to be tested. Applied after universe intersection.
-Groups with fewer overlapping query genes are silently skipped. Default 1.}
+\item{min_overlap}{Integer. Minimum number of \code{gene_list} genes that
+must overlap the group universe. Groups below this threshold are silently
+skipped. Default \code{1}.}
 
-\item{min_background}{Minimum size of the background gene set required to
-attempt enrichment. For \code{"hypergeometric"}, this is the number of
-expressed genes in the group (i.e. genes at levels in
-\code{expression_levels}); for \code{"gsea"}, this is the length of the
-gene ranking vector. Default 10.}
+\item{min_background}{Integer. Minimum background size required to attempt
+enrichment. For hypergeometric: number of expressed genes in the group.
+For GSEA: length of the ranking vector. Groups below this are silently
+skipped. Default \code{10}.}
 
-\item{gene_stats}{Optional named numeric vector of pre-calculated statistics
-(required only if \code{method="gsea"} and \code{universe_type="provided"}).}
+\item{gene_stats}{Optional named numeric vector of pre-computed gene scores.
+Used only when \code{method = "gsea"} and \code{universe_type = "provided"}.}
 
-\item{seed}{Integer seed for reproducibility in GSEA permutations.}
+\item{expression_levels}{Character vector of IHC levels treated as
+"expressed" for the hypergeometric test. Default
+\code{c("Low", "Medium", "High")}.}
 
-\item{expression_levels}{Character vector of IHC levels considered "enriched"
-for the hypergeometric test (e.g., \code{c("Low", "Medium", "High")}).}
+\item{alternative}{Character. \code{"greater"} (default), \code{"less"},
+or \code{"two.sided"}.}
 
-\item{alternative}{Character string specifying the alternative hypothesis.}
+\item{seed}{Optional integer seed for GSEA permutations.}
 
-\item{...}{Additional arguments passed to \code{run_enrichment} (e.g.,
-\code{n_perm}, \code{gsea_weight}, \code{adaptive}, \code{alpha}, \code{eps}).}
+\item{...}{Additional arguments passed to \code{\link[=run_enrichment]{run_enrichment()}} for GSEA
+(\code{n_perm}, \code{gsea_weight}, \code{adaptive}, \code{adaptive_mode},
+\code{alpha}, \code{eps}).}
 }
 \value{
-A data frame containing enrichment results for each group.
+A data frame with one row per group that passed filters, containing
+enrichment results plus a \code{padj} column (BH adjustment across groups).
+Returns an empty data frame if no groups pass.
 }
 \description{
-Applies enrichment testing (GSEA or hypergeometric) across multiple groups
-(e.g., tissues, or cell types) using Human Protein Atlas (HPA)
-Immunohistochemistry (IHC) data.
+Applies enrichment testing across multiple groups (e.g. tissues, cell types)
+using Human Protein Atlas (HPA) Immunohistochemistry (IHC) data. For each
+group, genes are ranked or categorised by IHC expression level and tested
+for enrichment of \code{gene_list}.
+}
+\seealso{
+\code{\link[=run_enrichment]{run_enrichment()}}, \code{\link[=enrich_by_hpa]{enrich_by_hpa()}}
 }

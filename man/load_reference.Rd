@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_reference.R
 \name{load_reference}
 \alias{load_reference}
-\title{Load one or more reference datasets shipped via Zenodo}
+\title{Load reference datasets from Zenodo cache}
 \usage{
 load_reference(
   datasets = NULL,
@@ -13,18 +13,28 @@ load_reference(
 )
 }
 \arguments{
-\item{datasets}{Character vector of dataset IDs to download/load. Use NULL (default)
-to load all datasets available for the given source.}
+\item{datasets}{Character vector of dataset names to load. If \code{NULL}
+or empty, all available datasets for \code{source} are downloaded.
+Use the manifest accessor functions to list available names.}
 
-\item{source}{Which manifest to use: hpa or tabula.}
+\item{source}{Character. \code{"tabula"} or \code{"hpa"}.}
 
-\item{dest_dir}{Where to cache downloaded files. Defaults to a persistent cache dir.}
+\item{dest_dir}{Character. Local cache directory. Defaults to the
+platform-appropriate user cache via \code{\link[tools:userdir]{tools::R_user_dir()}}.}
 
-\item{overwrite}{Re-download even if file exists locally.}
+\item{overwrite}{Logical. Re-download even if a local copy exists.
+Default \code{FALSE}.}
+
+\item{verify}{Logical. Verify SHA256 checksum after download.
+Default \code{TRUE}. Disable only for debugging.Corrupt downloads
+will silently propagate if verification is off.}
 }
 \value{
-A named list of loaded R objects (one per dataset).
+A named list of loaded R objects, one per requested dataset.
 }
 \description{
-Load one or more reference datasets shipped via Zenodo
+Downloads one or more reference datasets from the package Zenodo record
+and caches them locally. Subsequent calls with the same \code{datasets}
+and \code{dest_dir} return the cached files without re-downloading unless
+\code{overwrite = TRUE}.
 }

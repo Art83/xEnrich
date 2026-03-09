@@ -114,6 +114,5 @@ head(res[order(res$emp_p), ])
 
 }
 \seealso{
-\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA, \code{\link[=run_conditional_enrichment]{run_conditional_enrichment()}}
-for the ridge-regularised redundancy approach.
+\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA.
 }

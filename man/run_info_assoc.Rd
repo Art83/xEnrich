@@ -154,6 +154,5 @@ Paninski, L. (2003). Estimation of entropy and mutual information.
 }
 \seealso{
 \code{\link[=run_info_enrichment]{run_info_enrichment()}} for the gene-list (ORA) flavour,
-\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA,
-\code{\link[=run_conditional_enrichment]{run_conditional_enrichment()}} for ridge-regularised redundancy.
+\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA.
 }

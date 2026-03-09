@@ -70,8 +70,7 @@
 #'       versions of the corresponding p-values.}
 #'   }
 #'
-#' @seealso [run_enrichment()] for classical ORA/GSEA, [run_conditional_enrichment()]
-#'   for the ridge-regularised redundancy approach.
+#' @seealso [run_enrichment()] for classical ORA/GSEA.
 #'
 #' @examples
 #' universe <- paste0("G", 1:500)
@@ -114,7 +113,7 @@ run_info_enrichment <- function(
   # --- Universe ---------------------------------------------------------------
   if (is.null(universe)) {
     message(
-      "`universe` not supplied — defaulting to the union of all gene sets ",
+      "`universe` not supplied defaulting to the union of all gene sets ",
       "(", length(unique(unlist(gene_sets, use.names = FALSE))), " genes). ",
       "Supply an explicit universe for reproducible results."
     )
@@ -202,7 +201,7 @@ run_info_enrichment <- function(
 #'
 #' Internal workhorse for [run_info_enrichment()]. Computes I(gene_list ; gene_set)
 #' from the four joint probabilities implied by overlap count \code{k}.
-#' Vectorised over \code{k} — pass a scalar for a single observed value or a
+#' Vectorised over \code{k} - pass a scalar for a single observed value or a
 #' vector for the permutation null in one call.
 #'
 #' @param N Integer. Universe size.
@@ -223,7 +222,7 @@ run_info_enrichment <- function(
   p.1 <- m / N
   p.0 <- 1 - p.1
 
-  # Returns 0 for empty cells — consistent with the 0*log(0) = 0 convention
+  # Returns 0 for empty cells consistent with the 0*log(0) = 0 convention
   term <- function(p, pa, pb) {
     ifelse(p <= 0, 0, p * log2(p / (pa * pb)))
   }

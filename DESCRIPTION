@@ -1,17 +1,34 @@
 Package: xEnrich
-Title: Multi-Scale Enrichment Analysis Across Organs and Cell Types
+Title: Information-Theoretic Enrichment Analysis with Redundancy Selection
 Version: 0.0.0.9000
 Authors@R: 
-    person("Artur", "Shvetcov", , "shvetsov1983@gmail.com", role = "cre")
-Description: xEnrich provides flexible tools for performing gene and protein enrichment analysis across multiple biological reference datasets. It supports both hypergeometric and GSEA-based methods for quantifying overrepresentation in bulk tissue (e.g., Human Protein Atlas) and single-cell transcriptomic datasets (e.g., Tabula Sapiens).
+    person("Artur", "Shvetcov", , "shvetsov1983@gmail.com", role = c("aut", "cre"))
+Description: Provides a unified framework for gene set enrichment analysis
+    addressing two unsolved problems in standard workflows: (1) p-value
+    estimates from fixed permutation schemes carry unquantified Monte Carlo
+    uncertainty, and (2) significant pathway lists conflate independent signals
+    with redundant co-annotations of the same biology. Adaptive permutation
+    testing allocates computation according to signal clarity, providing
+    explicit confidence intervals on p-values and flagging genuinely uncertain
+    results. Information-theoretic scoring via mutual information ranks pathways
+    by information content, enabling greedy conditional MI selection that
+    identifies the minimal non-redundant set of independent signals. The
+    framework operates across gene list enrichment, ranked list enrichment,
+    and pathway-phenotype association analysis.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 URL: https://github.com/Art83/xEnrich
 BugReports: https://github.com/Art83/xEnrich/issues
-Suggests: 
+Depends:
+    R (>= 4.1.0)
+Imports:
+    Matrix,
+    stats,
+    grDevices,
+    graphics,
+    utils
+Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
-Depends: 
-    R (>= 3.5)

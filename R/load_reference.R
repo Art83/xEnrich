@@ -1,4 +1,4 @@
-# Package-level constant — change once for production
+# Package-level constant. change once for production
 .ZENODO_RECORD_ID <- 441892L
 
 
@@ -18,7 +18,7 @@
 #' @param overwrite Logical. Re-download even if a local copy exists.
 #'   Default \code{FALSE}.
 #' @param verify Logical. Verify SHA256 checksum after download.
-#'   Default \code{TRUE}. Disable only for debugging — corrupt downloads
+#'   Default \code{TRUE}. Disable only for debugging.Corrupt downloads
 #'   will silently propagate if verification is off.
 #'
 #' @return A named list of loaded R objects, one per requested dataset.
@@ -32,7 +32,7 @@ load_reference <- function(datasets  = NULL,
   source   <- match.arg(source)
   manifest <- if (source == "tabula") tabula_manifest else hpa_manifest
 
-  # Validate manifest structure upfront — catches broken sysdata early
+  # Validate manifest structure upfront, catches broken sysdata early
   required_cols <- c("dataset", "filename", "sha256")
   missing_cols  <- setdiff(required_cols, names(manifest))
   if (length(missing_cols) > 0)
@@ -155,7 +155,7 @@ xEnrich_cache_dir <- function() {
       got <- digest::digest(dest_file, algo = "sha256", file = TRUE)
       if (!identical(tolower(got), tolower(expected)))
         stop("SHA256 mismatch for '", filename,
-             "' — download may be corrupted.\n",
+             "' - download may be corrupted.\n",
              "  Expected: ", expected, "\n",
              "  Got:      ", got)
     }

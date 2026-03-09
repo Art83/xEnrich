@@ -85,8 +85,7 @@
 #'   }
 #'
 #' @seealso [run_info_enrichment()] for the gene-list (ORA) flavour,
-#'   [run_enrichment()] for classical ORA/GSEA,
-#'   [run_conditional_enrichment()] for ridge-regularised redundancy.
+#'   [run_enrichment()] for classical ORA/GSEA.
 #'
 #' @references
 #' Paninski, L. (2003). Estimation of entropy and mutual information.
@@ -206,7 +205,11 @@ run_info_assoc <- function(
   # --- Discretise scores (fixed — done once before permutations) --------------
   scores_disc <- lapply(pathway_scores,
                         function(s) .discretize_equalfreq(s, nbins))
-  y_disc <- as.integer(as.factor(phenotype))
+  y_disc <- if (is.numeric(phenotype)) {
+    .discretize_equalfreq(phenotype, nbins)
+  } else {
+    as.integer(as.factor(phenotype))
+  }
 
   # --- Observed MI ------------------------------------------------------------
   MI_obs <- vapply(

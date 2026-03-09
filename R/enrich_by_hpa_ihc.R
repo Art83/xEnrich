@@ -118,7 +118,7 @@ enrich_by_hpa_ihc <- function(
     if (nrow(reference_df) == 0L)
       stop("No rows remain after reliability filtering.")
   } else {
-    warning("Column 'Reliability' not found — skipping reliability filtering.")
+    warning("Column 'Reliability' not found, skipping reliability filtering.")
   }
 
   # --- IHC numeric encoding ---------------------------------------------------
@@ -126,7 +126,7 @@ enrich_by_hpa_ihc <- function(
   reference_df$expr_numeric <- ihc_levels[reference_df$Level]
 
   if (any(is.na(reference_df$expr_numeric))) {
-    warning("Unrecognised Level values detected — corresponding rows removed.")
+    warning("Unrecognised Level values detected, corresponding rows removed.")
     reference_df <- reference_df[!is.na(reference_df$expr_numeric), ]
     if (nrow(reference_df) == 0L)
       stop("No rows remain after removing unrecognised Level values.")
@@ -145,12 +145,12 @@ enrich_by_hpa_ihc <- function(
       dropped <- length(universe) - length(u)
       if (dropped > 0)
         message(dropped, " of ", length(universe),
-                " provided universe genes absent from reference_df — excluded.")
+                " provided universe genes absent from reference_df.Excluded.")
       if (length(u) == 0)
         stop("Provided universe has no overlap with reference_df$Gene.")
       u
     },
-    NULL   # "group" — computed per group below
+    NULL   # "group"-computed per group below
   )
 
   if (method == "gsea" && universe_type == "provided") {
@@ -181,7 +181,7 @@ enrich_by_hpa_ihc <- function(
         current_universe <- intersect(current_universe, names(gs))
         gs
       } else {
-        # Derive stats from mean IHC level per gene — explicit vapply
+        # Derive stats from mean IHC level per gene.explicit vapply
         genes_in_group <- unique(ref_group$Gene)
         gs <- vapply(genes_in_group, function(g) {
           mean(ref_group$expr_numeric[ref_group$Gene == g], na.rm = TRUE)
@@ -228,7 +228,7 @@ enrich_by_hpa_ihc <- function(
 
     if (is.null(res)) return(NULL)
 
-    # Flatten to one-row data frame — handle leading_edge safely
+    # Flatten to one-row data frame,handle leading_edge safely
     row <- data.frame(
       group          = group_name,
       method         = res$method,
@@ -246,7 +246,7 @@ enrich_by_hpa_ihc <- function(
     } else {
       row$enrichment_score   <- res$enrichment_score
       row$universe_size_used <- res$universe_size_used
-      # Store leading edge as a semicolon-delimited string — safe in data frames
+      # Store leading edge as a semicolon-delimited string.
       row$leading_edge <- paste(res$leading_edge, collapse = ";")
     }
     row

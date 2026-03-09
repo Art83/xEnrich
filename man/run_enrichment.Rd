@@ -2,16 +2,16 @@
 % Please edit documentation in R/run_enrichment.R
 \name{run_enrichment}
 \alias{run_enrichment}
-\title{Run enrichment analysis using hypergeometric test or GSEA-like score}
+\title{Run enrichment analysis: hypergeometric test or GSEA-like scoring}
 \usage{
 run_enrichment(
   gene_list,
-  universe,
+  universe = NULL,
   method = c("hypergeometric", "gsea"),
-  enriched_genes = NULL,
+  gene_set = NULL,
   gene_stats = NULL,
   gsea_weight = 1,
-  n_perm = 1000,
+  n_perm = 1000L,
   alternative = c("greater", "less", "two.sided"),
   adaptive = FALSE,
   adaptive_mode = c("pvalue", "decision", "refine"),
@@ -22,40 +22,174 @@ run_enrichment(
 )
 }
 \arguments{
-\item{gene_list}{Character vector of user-supplied gene symbols.}
+\item{gene_list}{Character vector of gene symbols defining the gene set
+under test. For hypergeometric: the query set. For GSEA: the pathway
+whose enrichment is being assessed in the \code{gene_stats} ranking.}
 
-\item{universe}{Character vector of all genes in the background set.}
+\item{universe}{Character vector of background genes. For hypergeometric,
+defaults to \code{union(gene_list, gene_set)}. For GSEA, defaults to
+\code{names(gene_stats)}.}
 
-\item{method}{Character. Enrichment method to use: "hypergeometric" or "gsea".}
+\item{method}{Character. \code{"hypergeometric"} (default) or
+\code{"gsea"}.}
 
-\item{enriched_genes}{Character vector. Required if method = "hypergeometric". The genes defining the biological set/pathway.}
+\item{gene_set}{Character vector. The pathway / biological set for the
+hypergeometric test. Ignored for GSEA.}
 
-\item{gene_stats}{Numeric vector. Required if method = "gsea". Named numeric vector of gene scores.}
+\item{gene_stats}{Named numeric vector. Per-gene scores defining the
+ranked list for GSEA (e.g. log fold-change, t-statistic). Names are
+gene symbols. Ignored for hypergeometric.}
 
-\item{gsea_weight}{Numeric. Exponent for GSEA running sum (default = 1).}
+\item{gsea_weight}{Numeric. Exponent for weighting hits by
+\code{|gene_stats|^gsea_weight}. Default \code{1}. Use \code{0} for
+the classic unweighted KS statistic.}
 
-\item{n_perm}{Integer. Number of permutations for empirical p-value (GSEA only).}
+\item{n_perm}{Integer. Permutations for the GSEA null. Default \code{1000}.
+Ignored for hypergeometric.}
 
-\item{alternative}{Character. Specifies the alternative hypothesis: "greater", "less",
-or "two.sided". For the hypergeometric method, "two.sided" delegates to
-\code{\link[stats:fisher.test]{stats::fisher.test()}} rather than \code{\link[stats:Hypergeometric]{stats::phyper()}}, which may give slightly
-different results than doubling the one-sided p-value.}
+\item{alternative}{Character. \code{"greater"} (default), \code{"less"},
+or \code{"two.sided"}. For hypergeometric with \code{"two.sided"},
+delegates to \code{\link[stats:fisher.test]{stats::fisher.test()}}.}
 
-\item{adaptive}{Logical. If TRUE, uses early stopping for permutation tests based on convergence.}
+\item{adaptive}{Logical. Use adaptive permutation stopping? Default
+\code{FALSE}. GSEA only; ignored with a warning for hypergeometric.}
 
-\item{adaptive_mode}{Character. Mode for early stopping: "pvalue", "decision", or "refine".}
+\item{adaptive_mode}{Character. \code{"pvalue"} (default),
+\code{"decision"}, or \code{"refine"}. See Adaptive permutation modes.
+Ignored when \code{adaptive = FALSE}.}
 
-\item{eps}{Numeric. The relative standard error threshold for early stopping when adaptive_mode = "pvalue".}
+\item{eps}{Numeric. RSE threshold for \code{adaptive_mode = "pvalue"}.
+Default \code{0.01}.}
 
-\item{alpha}{Numeric. Significance level used for confidence intervals and decision boundaries.}
+\item{alpha}{Numeric. Significance level for CI-based decisions and
+\code{stability_flag}. Default \code{0.05}.}
 
-\item{seed}{Numeric. Optional random seed for reproducibility.}
+\item{seed}{Optional integer. Passed to \code{\link[=set.seed]{set.seed()}} before any
+stochastic computation.}
 
-\item{keep_trace}{Logical. If TRUE function traces all results for permutation based analysis}
+\item{keep_trace}{Logical. If \code{TRUE}, attach per-batch diagnostic
+traces to the \code{inference} slot. Default \code{FALSE}. Ignored for
+hypergeometric.}
 }
 \value{
-A named list with enrichment results.
+A named list with:
+\describe{
+\item{\code{method}}{Method used.}
+\item{\code{p_value}}{Final p-value.}
+\item{\code{overlap}}{Number of query genes found in the set /
+ranking.}
+\item{\code{input_set_size}}{Size of \code{gene_list} after universe
+intersection.}
+\item{\code{universe_size}}{Size of \code{universe}.}
+\item{\code{fold_change}}{(Hypergeometric only.) Observed / expected
+overlap ratio.}
+\item{\code{group_set}}{(Hypergeometric only.) Size of
+\code{gene_set} in universe.}
+\item{\code{enrichment_score}}{(GSEA only.) Signed ES.}
+\item{\code{universe_size_used}}{(GSEA only.) Genes retained after
+NA removal and universe intersection.}
+\item{\code{leading_edge}}{(GSEA only.) Genes driving the ES peak.}
+\item{\code{inference}}{(GSEA only.) List of inference diagnostics.
+\code{NULL} for hypergeometric.}
+}
 }
 \description{
-Run enrichment analysis using hypergeometric test or GSEA-like score
+A unified interface for two enrichment approaches sharing a common output
+structure. The active method is controlled by \code{method}; certain
+arguments are only meaningful for one method (see Input contracts below).
+}
+\section{Input contracts}{
+
+\describe{
+\item{Hypergeometric (\code{method = "hypergeometric"})}{
+Requires \code{gene_set} (the pathway/biological set) and
+\code{gene_list} (the query). \code{universe} defaults to the union
+of both. \code{gene_stats}, \code{gsea_weight}, \code{n_perm},
+\code{adaptive}, \code{adaptive_mode}, \code{eps}, and
+\code{keep_trace} are ignored with a warning.}
+\item{GSEA (\code{method = "gsea"})}{
+Requires \code{gene_stats} (named numeric vector of per-gene scores —
+the ranked list) and \code{gene_list} (the gene set being tested).
+\code{universe} defaults to \code{names(gene_stats)}.
+\code{gene_set} is ignored.}
+}
+}
+
+\section{Terminology note}{
+
+In this function, \code{gene_list} is the \strong{gene set} (pathway)
+being tested for enrichment, and \code{gene_stats} supplies the
+\strong{ranked list} of all genes. This is the reverse of the naming
+convention in some tools (e.g. fgsea). See the \code{gene_stats} argument
+description.
+}
+
+\section{GSEA weighting}{
+
+Gene weights are computed as \code{|gene_stats|^gsea_weight}. Taking the
+absolute value means genes with large negative scores (e.g. strongly
+down-regulated) receive the same weight magnitude as genes with large
+positive scores. This is intentional and consistent with the original
+weighted GSEA formulation (Subramanian et al. 2005). Set
+\code{gsea_weight = 0} for the unweighted (classic KS) statistic.
+}
+
+\section{Adaptive permutation modes}{
+
+\describe{
+\item{\code{"pvalue"}}{Draws batches until RSE (relative standard error
+of p-hat) < \code{eps}. Best when an accurate p-value is needed.}
+\item{\code{"decision"}}{Draws batches until the Wilson CI for p-hat
+lies entirely above or below \code{alpha}. Best when only the
+sig/nonsig decision matters.}
+\item{\code{"refine"}}{Runs a fixed \code{n_perm} first; if the result
+is borderline, switches to decision-mode refinement. Best for
+computational efficiency across many gene sets.}
+}
+}
+
+\examples{
+# --- Hypergeometric ---
+universe  <- paste0("G", 1:500)
+gene_list <- sample(universe, 50)
+gene_set  <- sample(universe, 40)
+
+run_enrichment(
+  gene_list = gene_list,
+  universe  = universe,
+  method    = "hypergeometric",
+  gene_set  = gene_set
+)
+
+# --- GSEA, fixed permutations ---
+gene_stats        <- setNames(rnorm(500), universe)
+gene_list_gsea    <- sample(universe, 40)
+
+run_enrichment(
+  gene_list  = gene_list_gsea,
+  method     = "gsea",
+  gene_stats = gene_stats,
+  n_perm     = 500,
+  seed       = 1
+)
+
+# --- GSEA, adaptive (refine mode) ---
+run_enrichment(
+  gene_list     = gene_list_gsea,
+  method        = "gsea",
+  gene_stats    = gene_stats,
+  n_perm        = 500,
+  adaptive      = TRUE,
+  adaptive_mode = "refine",
+  seed          = 1
+)
+
+}
+\references{
+Subramanian, A. et al. (2005). Gene set enrichment analysis.
+\emph{PNAS}, 102(43), 15545–15550.
+}
+\seealso{
+\code{\link[=run_info_enrichment]{run_info_enrichment()}} for information-theoretic scoring,
+\code{\link[=run_redundancy_selection]{run_redundancy_selection()}} for post-enrichment redundancy reduction.
 }

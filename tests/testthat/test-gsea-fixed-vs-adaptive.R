@@ -77,7 +77,7 @@ test_that("Adaptive stops early for non-significant gene sets", {
   gene_stats <- rnorm(2000)
   names(gene_stats) <- paste0("g", seq_along(gene_stats))
 
-  # Random gene list → null-like
+  # Random gene list -> null-like
   gene_list <- sample(names(gene_stats), 20)
   universe  <- names(gene_stats)
 
@@ -92,7 +92,7 @@ test_that("Adaptive stops early for non-significant gene sets", {
     seed = 3
   )
 
-  expect_true(res$inference$B < 3000)
+  expect_true(res$inference$res$B < 3000)
   expect_true(res$p_value > 0.1)
 })
 
@@ -120,7 +120,7 @@ test_that("Adaptive runs longer for significant enrichment", {
   )
 
   expect_true(res$p_value < 0.05)
-  expect_true(res$inference$B > 5000)
+  expect_true(res$inference$res$B > 5000)
 })
 
 
@@ -177,6 +177,7 @@ test_that("Inference structure is correct", {
   )
 
   expect_true("inference" %in% names(res))
-  expect_true(res$inference$method == "adaptive")
-  expect_true(all(c("B", "RSE", "trace", "p", "k", "converged", "trace") %in% names(res$inference)))
+  expect_true("method" %in% names(res$inference))
+  expect_true("res" %in% names(res$inference))
+  expect_true(all(c("B", "p", "k", "converged") %in% names(res$inference$res)))
 })

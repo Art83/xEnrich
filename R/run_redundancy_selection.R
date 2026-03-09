@@ -1,7 +1,7 @@
 #' Greedy non-redundant pathway selection via conditional mutual information
 #'
 #' Addresses a fundamental limitation of enrichment analysis: when many
-#' pathways are nominally significant, most apparent signal is redundant —
+#' pathways are nominally significant, most apparent signal is redundant-
 #' the same genes appearing in multiple overlapping sets. Standard approaches
 #' (Jaccard clustering, representative selection, ridge penalisation) either
 #' discard pathways arbitrarily or produce coefficients that are difficult to
@@ -9,8 +9,8 @@
 #'
 #' This function builds a minimal non-redundant set by greedy forward
 #' selection on conditional mutual information (CMI). At each step, the
-#' pathway contributing the most \emph{new} information about the gene list —
-#' given all previously selected pathways — is chosen. Selection stops when
+#' pathway contributing the most \emph{new} information about the gene list,
+#' given all previously selected pathways,is chosen. Selection stops when
 #' no remaining pathway exceeds \code{min_gain} bits.
 #'
 #' The \code{redundancy_ratio} column (\code{conditional_mi / marginal_mi})
@@ -35,7 +35,7 @@
 #' conditioning on each separately) keeps CMI estimation tractable and avoids
 #' sparse-cell problems as the selected set grows.
 #'
-#' @section Conditioning artifact — synergy:
+#' @section Conditioning artifact, synergy:
 #' When a large pathway is selected first, the z=0 stratum (genes outside
 #' it) may be enriched for signal from small independent pathways, causing
 #' their CMI to exceed their marginal MI (\code{redundancy_ratio > 1}).
@@ -48,9 +48,9 @@
 #' the maximum of:
 #' \itemize{
 #'   \item A \strong{noise floor}: 95th percentile of max marginal MI under
-#'     gene-list permutation — ensures selection is above chance.
+#'     gene-list permutation, ensures selection is above chance.
 #'   \item A \strong{relevance threshold}: \code{fraction * max(marginal MI)}
-#'     — ensures each selected pathway contributes a meaningful fraction of
+#'     ensures each selected pathway contributes a meaningful fraction of
 #'     the dominant signal.
 #' }
 #' The relevance threshold is the binding constraint in most real datasets.
@@ -104,7 +104,6 @@
 #'
 #' @seealso [run_info_enrichment()] for marginal MI enrichment scores,
 #'   [run_info_assoc()] for sample-level phenotype association,
-#'   [run_conditional_enrichment()] for a ridge-based redundancy alternative,
 #'   [plot_gains()] to visualise the selection profile.
 #'
 #' @references
@@ -124,14 +123,14 @@
 #'   pathway_D = universe[200:230]
 #' )
 #'
-#' # gene_list is enriched in A/B region and C — not elsewhere
+#' # gene_list is enriched in A/B region and C, not elsewhere
 #' gene_list <- unique(c(
 #'   sample(universe[1:60],    45),
 #'   sample(universe[500:560], 15),
 #'   sample(universe[61:499],   3)
 #' ))
 #'
-#' # Step 1: marginal enrichment — A, B, and C all look significant
+#' # Step 1: marginal enrichment: A, B, and C all look significant
 #' mi_res <- run_info_enrichment(
 #'   gene_list = gene_list,
 #'   gene_sets = gene_sets,
@@ -141,7 +140,7 @@
 #' )
 #' print(mi_res[, c("set", "set_size", "info_bits", "emp_p", "padj_emp")])
 #'
-#' # Step 2: greedy selection — B is revealed as redundant with A
+#' # Step 2: greedy selection: B is revealed as redundant with A
 #' sel <- run_redundancy_selection(
 #'   gene_list      = gene_list,
 #'   gene_sets      = gene_sets,
@@ -337,7 +336,7 @@ run_redundancy_selection <- function(
 #' @export
 plot_gains <- function(sel, min_gain = NULL) {
   if (nrow(sel) == 0L) {
-    message("Nothing selected — nothing to plot.")
+    message("Nothing selected-nothing to plot.")
     return(invisible(sel))
   }
 
@@ -401,7 +400,7 @@ plot_gains <- function(sel, min_gain = NULL) {
 #' z-weighted average of MI within each stratum. Uses the
 #' 0 * log2(0) = 0 convention via [.mutual_information()].
 #'
-#' Strata with fewer than 2 observations are skipped — they cannot
+#' Strata with fewer than 2 observations are skipped, they cannot
 #' contribute a stable MI estimate.
 #'
 #' @param x Integer vector (binary: gene in query list).
