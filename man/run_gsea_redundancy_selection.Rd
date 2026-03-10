@@ -140,6 +140,8 @@ of GSEA diagnostics to the output.
 set.seed(1)
 universe   <- paste0("G", 1:1000)
 gene_stats <- setNames(rnorm(1000), universe)
+gene_stats[universe[1:70]]    <- gene_stats[universe[1:70]]    + 4
+gene_stats[universe[500:530]] <- gene_stats[universe[500:530]] + 3
 
 # Three pathway groups:
 #   A1/A2/A3 - redundant, driven by top-ranked genes

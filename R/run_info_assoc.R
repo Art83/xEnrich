@@ -142,8 +142,16 @@ run_info_assoc <- function(
   if (!is.numeric(n_perm) || n_perm < 1L)
     stop("`n_perm` must be a positive integer.")
 
+  .check_matrix_orientation(expr)
+  .check_na_expr(expr)
+  .check_sample_size(expr, phenotype)
+  .check_pathway_names(names(gene_sets))
+  expr <- .remove_zero_variance(expr)
+
   score <- match.arg(score)
   if (!is.null(seed)) set.seed(seed)
+  if (is.null(seed))
+    message("`seed` is NULL. Set `seed` for reproducible results.")
 
   # Windows does not support forking
   nthreads <- if (.Platform$OS.type == "windows") 1L else as.integer(nthreads)

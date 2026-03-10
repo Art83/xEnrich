@@ -85,9 +85,6 @@ or \code{"two.sided"}.}
 \item{...}{Additional named arguments passed to \code{\link[=run_enrichment]{run_enrichment()}} for
 GSEA (\code{n_perm}, \code{gsea_weight}, \code{adaptive},
 \code{adaptive_mode}, \code{alpha}, \code{eps}).}
-
-\item{expression_levels}{Not used in this wrapper (HPA RNA uses continuous
-expression; see \code{cutoff_type} instead).}
 }
 \value{
 A data frame with one row per group that passed filters, containing

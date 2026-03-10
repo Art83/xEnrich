@@ -199,6 +199,11 @@ run_assoc_redundancy_selection <- function(
   if (!is.list(gene_sets) || is.null(names(gene_sets)))
     stop("`gene_sets` must be a named list.")
 
+  .check_matrix_orientation(expr)
+  .check_na_expr(expr)
+  .check_sample_size(expr, phenotype)
+  expr <- .remove_zero_variance(expr)
+
   score <- match.arg(score)
   if (!is.null(seed)) set.seed(seed)
 

@@ -2,30 +2,65 @@
 % Please edit documentation in R/summarize_expression.R
 \name{summarize_expression}
 \alias{summarize_expression}
-\title{Summarize expression levels and categorize by strength}
+\title{Summarise expression distribution of a reference data frame}
 \usage{
 summarize_expression(
   data,
   group_col,
   gene_col = "Gene.name",
   expr_col = "pTPM",
-  thresholds = c(1, 10)
+  cutoff_preview = list(list(type = "quantile", value = 0.9), list(type = "threshold",
+    value = 1), list(type = "top_k", value = 200))
 )
 }
 \arguments{
-\item{data}{A data.frame with HPA expression values (pTPM).}
+\item{data}{Data frame in long format. Must contain \code{group_col},
+\code{gene_col}, and \code{expr_col}.}
 
-\item{group_col}{Column to group by (e.g. "Immune.cell", "Region").}
+\item{group_col}{Character. Column name for the grouping variable
+(e.g. \code{"Tissue"}, \code{"Brain.region"}, \code{"cell_type"}).}
 
-\item{gene_col}{Column for gene names (default: "Gene.name").}
+\item{gene_col}{Character. Column name for gene identifiers.
+Default \code{"Gene.name"}.}
 
-\item{expr_col}{Column for expression values (default: "pTPM").}
+\item{expr_col}{Character. Column name for expression values.
+Default \code{"pTPM"}.}
 
-\item{thresholds}{Numeric vector of length 2: c(medium_cutoff, high_cutoff)}
+\item{cutoff_preview}{Named list of cutoff specifications. Each element
+is a list with \code{type} (one of \code{"quantile"}, \code{"threshold"},
+\code{"top_k"}) and \code{value}. Defaults cover the three most common
+choices.}
 }
 \value{
-A data.frame with gene stats and expression category.
+A list with two elements:
+\describe{
+\item{\code{distribution}}{Data frame with one row per group:
+\code{group}, \code{n_genes}, \code{median_expr},
+\code{n_above_p75}, \code{n_above_p90}, \code{n_above_p95}.}
+\item{\code{cutoff_preview}}{Data frame with one row per
+group-cutoff combination: \code{group}, \code{cutoff_type},
+\code{cutoff_value}, \code{n_selected},
+\code{pct_of_universe}.}
+}
 }
 \description{
-Computes mean pTPM and expression category for each gene across groups.
+Inspects a reference data frame (HPA RNA, Tabula Sapiens, or similar)
+to help choose \code{cutoff_type} and \code{cutoff_value} before calling
+\code{\link{enrich_by_hpa}} or \code{\link{enrich_by_tabula}}. Returns
+per-group expression summaries and a preview of how many genes each
+cutoff combination would select.
+}
+\examples{
+# Simulate a minimal HPA-style long data frame
+set.seed(1)
+ref <- data.frame(
+  Gene.name = rep(paste0("G", 1:100), times = 3),
+  Tissue    = rep(c("Liver", "Kidney", "Brain"), each = 100),
+  pTPM      = c(rexp(100, 0.05), rexp(100, 0.02), rexp(100, 0.1))
+)
+
+sm <- summarize_expression(ref, group_col = "Tissue")
+sm$distribution
+sm$cutoff_preview
+
 }

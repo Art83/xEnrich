@@ -183,6 +183,11 @@ run_redundancy_selection <- function(
   if (fraction <= 0 || fraction >= 1)
     stop("`fraction` must be in (0, 1).")
 
+  .check_duplicates(gene_list, "gene_list")
+  .check_duplicates(universe,  "universe")
+  .check_case_mismatch(gene_list, universe)
+  .check_pathway_names(names(gene_sets))
+
   if (!is.null(seed)) set.seed(seed)
 
   # --- Intersect and filter ---------------------------------------------------
@@ -328,6 +333,8 @@ run_redundancy_selection <- function(
 #' independent pathway (ratio near 1); grey indicates partial redundancy
 #' (ratio < 1). The dashed line shows where selection stopped.
 #'
+#' @importFrom graphics barplot par abline legend text
+#' @importFrom grDevices colorRampPalette
 #' @param sel Data frame returned by [run_redundancy_selection()].
 #' @param min_gain Numeric. The threshold used in the selection run.
 #'   If \code{NULL}, read from \code{attr(sel, "min_gain")} when available.
@@ -378,8 +385,8 @@ plot_gains <- function(sel, min_gain = NULL) {
 
   legend(
     "topright",
-    legend = c("Independent (ratio \u2248 1)",
-               "Redundant (ratio \u2248 0)",
+    legend = c("Independent (ratio ~ 1)",
+               "Redundant (ratio ~ 0)",
                "min_gain threshold",
                "* synergy: CMI > marginal MI"),
     fill   = c("#2c7bb6", "#cccccc", NA, NA),
@@ -472,4 +479,41 @@ plot_gains <- function(sel, min_gain = NULL) {
   attr(threshold, "noise_floor")         <- noise_floor
   attr(threshold, "relevance_threshold") <- relevance_threshold
   threshold
+}
+
+
+#' Build a binary membership matrix from a named list of gene sets
+#'
+#' Converts a named list of gene sets into a sparse binary matrix with
+#' genes as rows and pathways as columns. Entry [g, k] is 1 if gene g
+#' belongs to pathway k, 0 otherwise. Used internally by
+#' \code{\link{run_redundancy_selection}} to represent pathway membership
+#' for conditional mutual information computation.
+#'
+#' @param sets Named list of character vectors. Each element is a gene set.
+#' @param universe Character vector of background genes. Only genes present
+#'   in \code{universe} are retained. Duplicates are removed.
+#'
+#' @return A sparse \code{Matrix::sparseMatrix} of dimensions
+#'   length(universe) x length(sets), with 1L entries where genes are
+#'   members of the corresponding pathway.
+#'
+#' @keywords internal
+#' @noRd
+.make_membership_matrix <- function(sets, universe) {
+  stopifnot(is.list(sets))
+  if (is.null(names(sets))) stop("sets must be a named list")
+  universe <- unique(universe)
+  G <- length(universe)
+  K <- length(sets)
+  idx <- lapply(sets, function(s) match(intersect(s, universe), universe))
+  i <- unlist(idx)
+  j <- rep(seq_len(K), lengths(idx))
+  Matrix::sparseMatrix(
+    i = i,
+    j = j,
+    x = 1L,
+    dims = c(G, K),
+    dimnames = list(universe, names(sets))
+  )
 }

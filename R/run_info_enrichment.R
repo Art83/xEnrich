@@ -108,6 +108,9 @@ run_info_enrichment <- function(
   if (!is.numeric(n_perm) || n_perm < 1)
     stop("`n_perm` must be a positive integer.")
 
+  .check_duplicates(gene_list, "gene_list")
+  .check_pathway_names(names(gene_sets))
+
   if (!is.null(seed)) set.seed(seed)
 
   # --- Universe ---------------------------------------------------------------
@@ -119,6 +122,9 @@ run_info_enrichment <- function(
     )
     universe <- unique(unlist(gene_sets, use.names = FALSE))
   }
+
+  .check_duplicates(universe, "universe")
+  .check_case_mismatch(gene_list, universe)
 
   gene_list <- intersect(gene_list, universe)
   gene_sets <- lapply(gene_sets, intersect, universe)

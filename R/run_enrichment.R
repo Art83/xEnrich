@@ -184,6 +184,8 @@ run_enrichment <- function(
   if (is.null(gene_list) || length(gene_list) == 0L)
     stop("`gene_list` must not be empty.")
 
+  .check_duplicates(gene_list, "gene_list")
+
   # ============================================================================
   # Hypergeometric path
   # ============================================================================
@@ -207,6 +209,9 @@ run_enrichment <- function(
     # Universe default
     if (is.null(universe))
       universe <- union(gene_list, gene_set)
+
+    .check_duplicates(universe, "universe")
+    .check_case_mismatch(gene_list, universe)
 
     gene_list <- intersect(gene_list, universe)
     gene_set  <- intersect(gene_set,  universe)
@@ -276,6 +281,9 @@ run_enrichment <- function(
   # Universe default for GSEA
   if (is.null(universe)) universe <- names(gene_stats)
 
+  .check_duplicates(universe, "universe")
+  .check_case_mismatch(gene_list, universe)
+
   gene_stats <- gene_stats[names(gene_stats) %in% universe]
   gene_list  <- intersect(gene_list, universe)
 
@@ -315,13 +323,18 @@ run_enrichment <- function(
   ES           <- es_trace$ES
   running_score <- es_trace$running_score
 
-  # Leading edge
-  peak_index   <- if (ES >= 0) which.max(running_score) else which.min(running_score)
-  leading_edge <- if (ES >= 0) {
-    names(ranked_genes)[hits & seq_along(ranked_genes) <= peak_index]
+  if (Nh == N_used) {
+    leading_edge <- character(0)
   } else {
-    names(ranked_genes)[hits & seq_along(ranked_genes) >= peak_index]
+    # Leading edge
+    peak_index   <- if (ES >= 0) which.max(running_score) else which.min(running_score)
+    leading_edge <- if (ES >= 0) {
+      names(ranked_genes)[hits & seq_along(ranked_genes) <= peak_index]
+    } else {
+      names(ranked_genes)[hits & seq_along(ranked_genes) >= peak_index]
+    }
   }
+
 
   # Permutation function (closure over w_base, N_used, Nh)
   perm_fun <- .make_perm_fun(w_base, N_used, Nh)
