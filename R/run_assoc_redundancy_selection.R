@@ -351,9 +351,18 @@ run_assoc_redundancy_selection <- function(
   )
 
   ## --- Greedy forward steps --------------------------------------------------
+  n_steps <- min(max_pathways, length(sig_sets))
+  if (n_steps < 2L) {
+    res <- do.call(rbind, Filter(Negate(is.null), log_rows))
+    attr(res, "min_gain")   <- as.numeric(min_gain)
+    attr(res, "n_sig")      <- n_sig
+    attr(res, "alpha")      <- alpha
+    attr(res, "score")      <- score
+    attr(res, "nbins_used") <- nbins
+    return(res)
+  }
 
-
-  for (step in seq(2L, min(max_pathways, length(sig_sets)))) {
+  for (step in seq(2L, n_steps)) {
     if (length(remaining) == 0L) break
 
     # MI(activity_j ; residual phenotype)

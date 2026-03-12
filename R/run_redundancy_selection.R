@@ -274,7 +274,14 @@ run_redundancy_selection <- function(
   )
 
   # --- Greedy forward steps ---------------------------------------------------
-  for (step in seq(2L, min(max_pathways, length(gene_sets)))) {
+  n_steps <- min(max_pathways, length(gene_sets))
+  if (n_steps < 2L) {
+    res <- do.call(rbind, Filter(Negate(is.null), log_rows))
+    attr(res, "min_gain") <- as.numeric(min_gain)
+    return(res)
+  }
+
+  for (step in seq(2L, n_steps)) {
     if (length(remaining) == 0L) break
 
     cmi_vals  <- vapply(
