@@ -213,7 +213,7 @@ run_info_assoc <- function(
   # --- Discretise scores (fixed — done once before permutations) --------------
   scores_disc <- lapply(pathway_scores,
                         function(s) .discretize_equalfreq(s, nbins))
-  y_disc <- if (is.numeric(phenotype)) {
+  y_disc <- if (is.numeric(phenotype) && length(unique(phenotype)) > 2L) {
     .discretize_equalfreq(phenotype, nbins)
   } else {
     as.integer(as.factor(phenotype))

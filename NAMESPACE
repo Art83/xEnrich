@@ -2,6 +2,7 @@
 
 S3method(print,xEnrich_pipeline)
 S3method(summary,xEnrich_pipeline)
+export(classify_assoc_selection)
 export(enrich_by_hpa)
 export(enrich_by_hpa_ihc)
 export(enrich_by_tabula)

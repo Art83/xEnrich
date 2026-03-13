@@ -303,3 +303,15 @@ test_that("run_info_assoc gives different p_values with different seeds", {
   expect_equal(res1$MI_bits, res2$MI_bits)
   expect_false(identical(res1$p_value, res2$p_value))
 })
+
+
+test_that("binary integer phenotype works (not discretized to constant)", {
+  # This was the bug: as.integer(status == "AZ") is numeric,
+  # so it went through discretize_equalfreq and collapsed to a constant
+  bin_pheno <- as.integer(c(rep(0, 30), rep(1, 30)))
+  expect_no_error(
+    res <- run_info_assoc(expr, bin_pheno, gene_sets, n_perm=100, seed=1)
+  )
+  # top set should have real MI, not zero
+  expect_gt(max(res$MI_bits), 0)
+})

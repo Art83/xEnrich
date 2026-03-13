@@ -75,8 +75,6 @@ Taken from \code{assoc_results$MI_bits}.}
 activities) in bits. Equals \code{marginal_mi} at step 1.}
 \item{\code{redundancy_ratio}}{\code{conditional_mi /
       marginal_mi}. Near 1 = independent; near 0 = redundant.}
-\item{\code{cumulative_bits}}{Running total of
-\code{conditional_mi}.}
 \item{\code{p_value}}{Original \code{p_value} from
 \code{assoc_results}.}
 \item{\code{padj}}{Original \code{padj} from

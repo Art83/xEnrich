@@ -106,8 +106,6 @@
 #'       activities) in bits. Equals \code{marginal_mi} at step 1.}
 #'     \item{\code{redundancy_ratio}}{\code{conditional_mi /
 #'       marginal_mi}. Near 1 = independent; near 0 = redundant.}
-#'     \item{\code{cumulative_bits}}{Running total of
-#'       \code{conditional_mi}.}
 #'     \item{\code{p_value}}{Original \code{p_value} from
 #'       \code{assoc_results}.}
 #'     \item{\code{padj}}{Original \code{padj} from
@@ -267,7 +265,7 @@ run_assoc_redundancy_selection <- function(
   ## --- Discretise activities and phenotype -----------------------------------
   activity_disc <- lapply(activity,
                           function(a) .discretize_equalfreq(a, nbins))
-  y_disc <- if (is.numeric(phenotype)) {
+  y_disc <- if (is.numeric(phenotype) && length(unique(phenotype)) > 2L) {
     .discretize_equalfreq(phenotype, nbins)
   } else {
     as.integer(as.factor(phenotype))
@@ -303,7 +301,9 @@ run_assoc_redundancy_selection <- function(
     marginal_mi      = numeric(0),
     conditional_mi   = numeric(0),
     redundancy_ratio = numeric(0),
-    cumulative_bits  = numeric(0),
+    is_suppressor    = logical(0),
+    #Change re:ratio becomes well over 1 due to unbounded residuals
+    #cumulative_bits  = numeric(0),
     p_value          = numeric(0),
     padj             = numeric(0),
     z_score          = numeric(0),
@@ -323,12 +323,18 @@ run_assoc_redundancy_selection <- function(
 
   selected   <- best_name
   remaining  <- setdiff(sig_sets, best_name)
+  #Change re:ratio becomes well over 1 due to unbounded residuals
 
-  phenotype_num <- as.numeric(phenotype)
-  selected_df   <- data.frame(a1 = activity[[best_name]])
-  fit           <- lm(phenotype_num ~ ., data = selected_df)
-  resid_current <- residuals(fit)
-  cum_bits      <- best_gain
+  # phenotype_num <- as.numeric(phenotype)
+  # selected_df   <- data.frame(a1 = activity[[best_name]])
+  # fit           <- lm(phenotype_num ~ ., data = selected_df)
+  # resid_current <- residuals(fit)
+  # cum_bits      <- best_gain
+
+  selected_mat <- matrix(activity[[best_name]], ncol = 1L,
+                         dimnames = list(NULL, best_name))
+  #Change re:ratio becomes well over 1 due to unbounded residuals
+  #cum_bits <- best_gain
 
   assoc_lookup <- setNames(
     split(sig_assoc, seq_len(nrow(sig_assoc))),
@@ -343,7 +349,9 @@ run_assoc_redundancy_selection <- function(
     marginal_mi      = best_gain,
     conditional_mi   = best_gain,
     redundancy_ratio = 1,
-    cumulative_bits  = cum_bits,
+    is_suppressor    = FALSE,
+    #Change re:ratio becomes well over 1 due to unbounded residuals
+    #cumulative_bits  = cum_bits,
     p_value          = assoc_lookup[[best_name]]$p_value,
     padj             = assoc_lookup[[best_name]]$padj,
     z_score          = assoc_lookup[[best_name]]$z_score,
@@ -366,10 +374,27 @@ run_assoc_redundancy_selection <- function(
     if (length(remaining) == 0L) break
 
     # MI(activity_j ; residual phenotype)
-    resid_disc <- .discretize_equalfreq(resid_current, nbins)
+    #Change re:ratio becomes well over 1 due to unbounded residuals
+    # resid_disc <- .discretize_equalfreq(resid_current, nbins)
+    # cmi_vals <- vapply(
+    #   remaining,
+    #   function(nm) .mutual_information(activity_disc[[nm]], resid_disc),
+    #   numeric(1L)
+    # )
+
     cmi_vals <- vapply(
       remaining,
-      function(nm) .mutual_information(activity_disc[[nm]], resid_disc),
+      function(nm) {
+        # Orthogonalise candidate activity against selected activities,
+        # then measure how much residual signal it still shares with phenotype.
+        a_resid <- if (ncol(selected_mat) == 0L) {
+          activity[[nm]]
+        } else {
+          residuals(lm(activity[[nm]] ~ selected_mat))
+        }
+        a_disc <- .discretize_equalfreq(a_resid, nbins)
+        .mutual_information(a_disc, y_disc)
+      },
       numeric(1L)
     )
 
@@ -387,12 +412,17 @@ run_assoc_redundancy_selection <- function(
 
     selected  <- c(selected, best_name)
     remaining <- setdiff(remaining, best_name)
-    cum_bits  <- cum_bits + best_cmi
+    #Change re:ratio becomes well over 1 due to unbounded residuals
+    #cum_bits  <- cum_bits + best_cmi
 
     # Update conditioning variable: mean of all selected activity scores
-    selected_df[[paste0("a", length(selected))]] <- activity[[best_name]]
-    fit           <- lm(phenotype_num ~ ., data = selected_df)
-    resid_current <- residuals(fit)
+    #Change re:ratio becomes well over 1 due to unbounded residuals
+    # selected_df[[paste0("a", length(selected))]] <- activity[[best_name]]
+    # fit           <- lm(phenotype_num ~ ., data = selected_df)
+    # resid_current <- residuals(fit)
+
+    selected_mat <- cbind(selected_mat, activity[[best_name]])
+    colnames(selected_mat)[ncol(selected_mat)] <- best_name
 
     log_rows[[step]] <- data.frame(
       step             = as.integer(step),
@@ -400,8 +430,12 @@ run_assoc_redundancy_selection <- function(
       set_size         = length(gene_sets[[best_name]]),
       marginal_mi      = mi_marginal[[best_name]],
       conditional_mi   = best_cmi,
-      redundancy_ratio = best_cmi / mi_marginal[[best_name]],
-      cumulative_bits  = cum_bits,
+      #redundancy_ratio = best_cmi / mi_marginal[[best_name]],
+      #redundancy_ratio = best_cmi / max(best_cmi, mi_marginal[[best_name]]),
+      is_suppressor    = best_cmi > mi_marginal[[best_name]],
+      redundancy_ratio = min(1.0, best_cmi / mi_marginal[[best_name]]),
+      #Change re:ratio becomes well over 1 due to unbounded residuals
+      #cumulative_bits  = cum_bits,
       p_value          = assoc_lookup[[best_name]]$p_value,
       padj             = assoc_lookup[[best_name]]$padj,
       z_score          = assoc_lookup[[best_name]]$z_score,
