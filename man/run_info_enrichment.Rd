@@ -58,7 +58,8 @@ containing:
 the direction of overlap, not from MI itself, which is always
 non-negative.}
 \item{\code{z_score}}{Standard scores of \code{info_bits} relative to the
-permutation null. \code{NA} when null standard deviation is zero.}
+permutation null. \code{NA} when null standard deviation is zero or
+\code{n_perm} is too small to estimate it reliably.}
 \item{\code{emp_p}}{Empirical p-value: proportion of null bits >=
 observed, with a +1 / (n_perm + 1) continuity correction.}
 \item{\code{p_enrich}}{Exact hypergeometric enrichment p-value.}

@@ -59,7 +59,8 @@
 #'       the direction of overlap, not from MI itself, which is always
 #'       non-negative.}
 #'     \item{\code{z_score}}{Standard scores of \code{info_bits} relative to the
-#'       permutation null. \code{NA} when null standard deviation is zero.}
+#'       permutation null. \code{NA} when null standard deviation is zero or
+#'       \code{n_perm} is too small to estimate it reliably.}
 #'     \item{\code{emp_p}}{Empirical p-value: proportion of null bits >=
 #'       observed, with a +1 / (n_perm + 1) continuity correction.}
 #'     \item{\code{p_enrich}}{Exact hypergeometric enrichment p-value.}
@@ -169,8 +170,11 @@ run_info_enrichment <- function(
     bits_null <- .ite_overlap_bits(N, n, m, k_null)
 
     null_mean <- mean(bits_null)
-    null_sd   <- sd(bits_null)
-    z_score   <- if (null_sd > 0) (obs_bits - null_mean) / null_sd else NA_real_
+    # sd() of a length-1 vector returns NA, not 0 — guard explicitly
+    null_sd   <- if (length(bits_null) > 1L) sd(bits_null) else NA_real_
+    z_score   <- if (!is.na(null_sd) && null_sd > 0) {
+      (obs_bits - null_mean) / null_sd
+    } else NA_real_
     emp_p     <- (sum(bits_null >= obs_bits) + 1L) / (n_perm + 1L)
 
     data.frame(
@@ -249,7 +253,3 @@ run_info_enrichment <- function(
 
   pmax(0, mi_raw + correction)
 }
-
-
-
-

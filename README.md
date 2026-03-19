@@ -12,13 +12,13 @@ biological context — answering not just *which* pathways are altered but
 Standard enrichment analysis has three persistent weaknesses:
 
 1. **P-values from fixed permutation schemes carry unquantified Monte Carlo
-   uncertainty.** You run 1 000 permutations and get p = 0.048 — but how
+   uncertainty.** You run 1 000 permutations and get p = 0.048 - but how
    confident are you that the true p is below 0.05?
 
 2. **Significant pathway lists conflate independent signals with redundant
    co-annotations of the same biology.** GO:Fatty acid oxidation,
    GO:Fatty acid beta-oxidation, and KEGG:Fatty acid metabolism are not
-   three independent findings — they are one finding described three times.
+   three independent findings - they are one finding described three times.
 
 3. **After you know *which* pathways are enriched, you still don't know
    *where in the body* those pathways are active**, or *which cell type*

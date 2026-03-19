@@ -8,9 +8,9 @@
 
 #' Warn if a character vector contains duplicate values
 #'
-#' Duplicates in gene_list inflate observed overlap counts; duplicates in
-#' universe distort background frequencies. This helper warns once with a
-#' count and the first few offenders.
+#' Duplicates in gene_list are removed downstream by intersect(), but the
+#' user should know they were present. This helper warns once with a count
+#' and the first few offenders.
 #'
 #' @param x Character vector to check.
 #' @param arg_name String used in the warning message (e.g. "gene_list").
@@ -27,7 +27,7 @@
         "`%s` contains %d duplicate value(s) (e.g. %s). ",
         arg_name, length(dups), examples
       ),
-      "Duplicates will be retained but may inflate overlap counts. ",
+      "Duplicates will be removed before analysis. ",
       "Consider calling unique() before passing to this function.",
       call. = FALSE
     )
@@ -131,9 +131,15 @@
 
 #' Warn if expression matrix appears to be transposed
 #'
-#' run_info_assoc expects samples x genes. If nrow >> ncol the matrix is
-#' likely genes x samples (a common mistake). Warns when nrow > 5 * ncol
-#' and ncol < 500 (a reasonable upper bound on sample count).
+#' run_info_assoc expects samples x genes (rows = samples, cols = genes).
+#' Two heuristics are applied:
+#'   1. nrow > 5 * ncol  — far more rows than columns, classic large-genomics
+#'      transposition (e.g. 20 000 genes x 100 samples passed as-is).
+#'   2. nrow > ncol AND ncol < 100 — more rows than columns and very few
+#'      columns, which is almost always genes x samples in omics data
+#'      (e.g. 500 proteins x 80 samples in a proteomics experiment).
+#' Both conditions require ncol < 500 to avoid false positives on datasets
+#' with genuinely large sample counts.
 #'
 #' @param expr Numeric matrix.
 #'
@@ -143,13 +149,14 @@
 .check_matrix_orientation <- function(expr) {
   nr <- nrow(expr)
   nc <- ncol(expr)
-  if (nr > 5L * nc && nc < 500L) {
+  if ((nr > 5L * nc || (nr > nc && nc < 100L)) && nc < 500L) {
     warning(
       sprintf(
         "`expr` has %d rows and %d columns. ", nr, nc
       ),
-      "run_info_assoc expects a samples x genes matrix (rows = samples). ",
-      "If your matrix is genes x samples, transpose it with t(expr).",
+      "run_info_assoc expects a samples x genes matrix (rows = samples, ",
+      "cols = genes). If your matrix is genes x samples, ",
+      "transpose it with t(expr).",
       call. = FALSE
     )
   }
