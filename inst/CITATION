@@ -1,0 +1,9 @@
+bibentry(
+  bibtype  = "Manual",
+  title    = "{xEnrich}: Multi-Scale Enrichment with Information Theory and Location Context",
+  author   = person("Artur", "Shvetcov", email = "shvetsov1983@gmail.com"),
+  year     = "2026",
+  note     = "R package version 0.1.0",
+  doi      = "10.5281/zenodo.19108669",
+  url      = "https://github.com/Art83/xEnrich"
+)

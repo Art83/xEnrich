@@ -102,12 +102,13 @@ gene_sets <- list(
   noise      = genes[100:130]
 )
 
-assoc <- run_info_assoc(expr, phenotype, gene_sets, n_perm = 500, seed = 42)
-sel   <- run_assoc_redundancy_selection(
+assoc      <- run_info_assoc(expr, phenotype, gene_sets, n_perm = 500, seed = 42)
+sel        <- run_assoc_redundancy_selection(
   assoc, expr, phenotype, gene_sets, seed = 42
 )
+classified <- classify_assoc_selection(sel)
 
-result <- summarize_selection(sel, expr, phenotype, gene_sets)
+result <- summarize_selection(classified, expr, phenotype, gene_sets)
 print(result[, c("pathway", "signal_class", "marginal_r2",
                   "incremental_r2", "cumulative_r2")])
 cat(sprintf("Total R2: \%.1f\%\%  |  Residual: \%.1f\%\%\n",

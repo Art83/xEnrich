@@ -1,5 +1,8 @@
 # xEnrich: Multi-Scale Enrichment for Mechanistic and Biomarker Discovery
 
+[![R-CMD-check](https://github.com/Art83/xEnrich/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Art83/xEnrich/actions/workflows/R-CMD-check.yaml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19108669.svg)](https://doi.org/10.5281/zenodo.19108669)
+
 **xEnrich** is an R package that translates differential omics results into
 biological context — answering not just *which* pathways are altered but
 *where* in the body and *in which cell type* those changes are most relevant.
@@ -99,10 +102,10 @@ sel <- run_assoc_redundancy_selection(
 )
 
 # Plain-language classification
-classify_assoc_selection(sel)
+classified <- classify_assoc_selection(sel)
 
 # Variance-explained decomposition
-result <- summarize_selection(sel, expr_matrix, phenotype_vec, reactome_sets)
+result <- summarize_selection(classified, expr_matrix, phenotype_vec, reactome_sets)
 # "2 pathways explain 34% of phenotype variance"
 
 # Per-sample activity for downstream models
@@ -172,11 +175,23 @@ vignette("xEnrich")
 
 ## Citation
 
-A manuscript describing xEnrich is in preparation. In the meantime:
+If you use xEnrich in published work, please cite:
 
 > Shvetcov A (2026). *xEnrich: Multi-scale enrichment with information theory
-> and location context.* R package.
-> https://github.com/Art83/xEnrich
+> and location context.* R package version 0.1.0.
+> https://doi.org/10.5281/zenodo.19108669
+
+```bibtex
+@software{xEnrich,
+  author  = {Shvetcov, Artur},
+  title   = {{xEnrich}: Multi-scale enrichment with information theory
+             and location context},
+  year    = {2026},
+  version = {0.1.0},
+  doi     = {10.5281/zenodo.19108669},
+  url     = {https://github.com/Art83/xEnrich}
+}
+```
 
 ## License
 
