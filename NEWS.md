@@ -1,4 +1,4 @@
-# xEnrich 0.0.0.9000
+# xEnrich 0.1.0
 
 * Initial development version.
 

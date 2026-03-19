@@ -1,4 +1,3 @@
-# Package-level constant. change once for production
 .ZENODO_RECORD_ID <- 19106109L
 
 
