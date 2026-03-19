@@ -4,13 +4,18 @@
 \alias{plot_gains}
 \title{Plot conditional MI gains from run_redundancy_selection}
 \usage{
-plot_gains(sel, min_gain = NULL)
+plot_gains(sel, min_gain = NULL, max_label = 35)
 }
 \arguments{
 \item{sel}{Data frame returned by \code{\link[=run_redundancy_selection]{run_redundancy_selection()}}.}
 
 \item{min_gain}{Numeric. The threshold used in the selection run.
 If \code{NULL}, read from \code{attr(sel, "min_gain")} when available.}
+
+\item{max_label}{Integer. Maximum character length for pathway axis
+labels. Longer names are truncated with \code{..}. The
+\code{REACTOME_} prefix is stripped automatically. Default
+\code{35}.}
 }
 \value{
 Invisibly returns \code{sel}.

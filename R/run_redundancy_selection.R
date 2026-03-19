@@ -345,10 +345,14 @@ run_redundancy_selection <- function(
 #' @param sel Data frame returned by [run_redundancy_selection()].
 #' @param min_gain Numeric. The threshold used in the selection run.
 #'   If \code{NULL}, read from \code{attr(sel, "min_gain")} when available.
+#' @param max_label Integer. Maximum character length for pathway axis
+#'   labels. Longer names are truncated with \code{..}. The
+#'   \code{REACTOME_} prefix is stripped automatically. Default
+#'   \code{35}.
 #'
 #' @return Invisibly returns \code{sel}.
 #' @export
-plot_gains <- function(sel, min_gain = NULL) {
+plot_gains <- function(sel, min_gain = NULL, max_label = 35) {
   if (nrow(sel) == 0L) {
     message("Nothing selected-nothing to plot.")
     return(invisible(sel))
@@ -357,18 +361,32 @@ plot_gains <- function(sel, min_gain = NULL) {
   if (is.null(min_gain)) min_gain <- attr(sel, "min_gain")
 
   # Colour by redundancy_ratio: independent = blue, redundant = grey
+  # Cap at 1 for colouring (synergy values > 1 get full blue)
   pal   <- colorRampPalette(c("#cccccc", "#2c7bb6"))(100)
   r     <- pmin(pmax(sel$redundancy_ratio, 0), 1)
   cols  <- pal[pmax(1L, as.integer(r * 99) + 1L)]
 
-  op <- par(mar = c(8, 4.5, 3, 1))
+  # Abbreviate long pathway names for axis labels
+  short_names <- gsub("^REACTOME_", "", sel$pathway)
+  short_names <- gsub("_", " ", short_names)
+  too_long    <- nchar(short_names) > max_label
+  short_names[too_long] <- paste0(substr(short_names[too_long], 1,
+                                         max_label - 2), "..")
+
+  # Scale margins and font to number of bars
+  n_bars  <- nrow(sel)
+  cex_ax  <- if (n_bars <= 10) 0.75 else if (n_bars <= 20) 0.6 else 0.5
+  mar_bot <- min(15, max(8, max(nchar(short_names)) * cex_ax * 0.55))
+
+  op <- par(mar = c(mar_bot, 4.5, 3, 1))
   on.exit(par(op))
 
   bp <- barplot(
     sel$conditional_mi,
-    names.arg = sel$pathway,
+    names.arg = short_names,
     col       = cols,
     las       = 2,
+    cex.names = cex_ax,
     border    = NA,
     ylab      = "Conditional MI (bits)",
     main      = "Information gain per selection step",
@@ -383,7 +401,7 @@ plot_gains <- function(sel, min_gain = NULL) {
     x      = bp,
     y      = sel$conditional_mi + max(sel$conditional_mi) * 0.03,
     labels = labels,
-    cex    = 0.75,
+    cex    = 0.6,
     col    = "grey30"
   )
 
@@ -401,7 +419,7 @@ plot_gains <- function(sel, min_gain = NULL) {
     lty    = c(NA, NA, 2, NA),
     col    = c(NA, NA, "firebrick", NA),
     bty    = "n",
-    cex    = 0.85
+    cex    = 0.75
   )
 
   invisible(sel)

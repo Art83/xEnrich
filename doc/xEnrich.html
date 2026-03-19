@@ -407,11 +407,11 @@ phenotype, calibrated by permutation:</p>
 <span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
 <span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a>assoc[, <span class="fu">c</span>(<span class="st">&quot;set&quot;</span>, <span class="st">&quot;set_size&quot;</span>, <span class="st">&quot;MI_bits&quot;</span>, <span class="st">&quot;z_score&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;padj&quot;</span>)]</span>
 <span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;                 set set_size    MI_bits    z_score     p_value       padj</span></span>
-<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1   immune_response       40 0.52885933 16.6265765 0.001996008 0.00499002</span></span>
-<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation       35 0.52885933 16.6265765 0.001996008 0.00499002</span></span>
-<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport       41 0.11042039  2.0124056 0.029940120 0.04990020</span></span>
-<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       31 0.05215677 -0.1428794 0.510978044 0.63872255</span></span>
-<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       31 0.02759254 -1.0648049 0.882235529 0.88223553</span></span></code></pre></div>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt; 1   immune_response       40 0.49279195 23.6340430 0.001996008 0.00499002</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation       35 0.49279195 23.6340430 0.001996008 0.00499002</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport       41 0.05631933  2.3759702 0.029940120 0.04990020</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       31 0.00000000 -0.6145792 1.000000000 1.00000000</span></span>
+<span id="cb2-16"><a href="#cb2-16" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       31 0.00000000 -0.6135967 1.000000000 1.00000000</span></span></code></pre></div>
 <p>Three pathways are significant: <code>immune_response</code>,
 <code>immune_regulation</code> (its shadow), and
 <code>solute_transport</code>. The noise pathways are correctly
@@ -430,17 +430,17 @@ non-significant.</p>
 <span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt; 3 / 5 pathways significant at padj &lt;= 0.05.</span></span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; Auto-selected nbins = 4.</span></span>
-<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.12107 bits (noise floor = 0.12107, relevance = 0.07933 [15% of leading MI]).</span></span>
-<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best CMI = 0.08499 bits &lt; min_gain = 0.12107.</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.07392 bits (noise floor = 0.06697, relevance = 0.07392 [15% of leading MI]).</span></span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best CMI = 0.03088 bits &lt; min_gain = 0.07392.</span></span>
 <span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
 <span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a>sel[, <span class="fu">c</span>(<span class="st">&quot;step&quot;</span>, <span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;marginal_mi&quot;</span>, <span class="st">&quot;conditional_mi&quot;</span>,</span>
 <span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a>        <span class="st">&quot;redundancy_ratio&quot;</span>, <span class="st">&quot;cumulative_bits&quot;</span>)]</span>
 <span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a><span class="co">#&gt;                  step          pathway marginal_mi conditional_mi</span></span>
-<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; immune_response     1  immune_response   0.5288593      0.5288593</span></span>
-<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; solute_transport    2 solute_transport   0.1104204      0.4280915</span></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co">#&gt; immune_response     1  immune_response  0.49279195      0.4927920</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a><span class="co">#&gt; solute_transport    2 solute_transport  0.05631933      0.3800016</span></span>
 <span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a><span class="co">#&gt;                  redundancy_ratio cumulative_bits</span></span>
-<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; immune_response          1.000000       0.5288593</span></span>
-<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; solute_transport         3.876924       0.9569508</span></span></code></pre></div>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a><span class="co">#&gt; immune_response          1.000000       0.4927920</span></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a><span class="co">#&gt; solute_transport         6.747269       0.8727936</span></span></code></pre></div>
 <p>The redundancy ratio reveals the answer:</p>
 <ul>
 <li><code>immune_response</code> and <code>solute_transport</code> have
@@ -458,34 +458,58 @@ with the phenotype is entirely explained by
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>classified[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;marginal_strength&quot;</span>, <span class="st">&quot;signal_class&quot;</span>, <span class="st">&quot;action&quot;</span>)]</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt;                           pathway marginal_strength signal_class</span></span>
 <span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; immune_response   immune_response            strong      primary</span></span>
-<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; solute_transport solute_transport              weak   suppressor</span></span>
-<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;                                      action</span></span>
-<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; immune_response                      report</span></span>
-<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; solute_transport inspect, possible artifact</span></span></code></pre></div>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; solute_transport solute_transport              weak  independent</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;                                            action</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; immune_response                            report</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt; solute_transport low confidence, treat cautiously</span></span></code></pre></div>
 </div>
-<div id="step-4-compute_pathway_activity" class="section level3">
-<h3>Step 4: compute_pathway_activity()</h3>
+<div id="step-4-summarize_selection" class="section level3">
+<h3>Step 4: summarize_selection()</h3>
+<p>Translate MI into variance explained — the table a clinician can
+read:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>summary_sel <span class="ot">&lt;-</span> <span class="fu">summarize_selection</span>(classified, expr, phenotype, gene_sets)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>summary_sel[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;signal_class&quot;</span>, <span class="st">&quot;marginal_r2&quot;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>                <span class="st">&quot;incremental_r2&quot;</span>, <span class="st">&quot;cumulative_r2&quot;</span>)]</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt;                           pathway signal_class marginal_r2 incremental_r2</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; immune_response   immune_response      primary  0.60712013      0.6071201</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; solute_transport solute_transport  independent  0.09628523      0.1738994</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;                  cumulative_r2</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; immune_response      0.6071201</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; solute_transport     0.7810195</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;%d independent pathways explain %.1f%% of phenotype variance (adj R2 = %.1f%%)</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="fu">nrow</span>(summary_sel),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">attr</span>(summary_sel, <span class="st">&quot;total_r2&quot;</span>) <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>  <span class="fu">attr</span>(summary_sel, <span class="st">&quot;adj_r2&quot;</span>) <span class="sc">*</span> <span class="dv">100</span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>))</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; 2 independent pathways explain 78.1% of phenotype variance (adj R2 = 77.7%)</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">&quot;Residual unexplained: %.1f%%</span><span class="sc">\n</span><span class="st">&quot;</span>, <span class="fu">attr</span>(summary_sel, <span class="st">&quot;residual_pct&quot;</span>)))</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; Residual unexplained: 21.9%</span></span></code></pre></div>
+</div>
+<div id="step-5-compute_pathway_activity" class="section level3">
+<h3>Step 5: compute_pathway_activity()</h3>
 <p>Extract per-sample activity scores for the selected pathways, ready
 for heatmaps, mediation models, or external regression:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>act <span class="ot">&lt;-</span> <span class="fu">compute_pathway_activity</span>(</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="at">expr      =</span> expr,</span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets[sel<span class="sc">$</span>pathway],</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">score     =</span> <span class="st">&quot;mean_z&quot;</span></span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>)</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Activity matrix:&quot;</span>, <span class="fu">nrow</span>(act), <span class="st">&quot;samples x&quot;</span>, <span class="fu">ncol</span>(act), <span class="st">&quot;pathways</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; Activity matrix: 120 samples x 2 pathways</span></span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Correlation with phenotype:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Correlation with phenotype:</span></span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cor</span>(act, phenotype), <span class="dv">3</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;                   [,1]</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt; immune_response  0.779</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt; solute_transport 0.310</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>act <span class="ot">&lt;-</span> <span class="fu">compute_pathway_activity</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">expr      =</span> expr,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets[sel<span class="sc">$</span>pathway],</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">score     =</span> <span class="st">&quot;mean_z&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Activity matrix:&quot;</span>, <span class="fu">nrow</span>(act), <span class="st">&quot;samples x&quot;</span>, <span class="fu">ncol</span>(act), <span class="st">&quot;pathways</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; Activity matrix: 120 samples x 2 pathways</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Correlation with phenotype:</span><span class="sc">\n</span><span class="st">&quot;</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt; Correlation with phenotype:</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">cor</span>(act, phenotype), <span class="dv">3</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt;                   [,1]</span></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="co">#&gt; immune_response  0.779</span></span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt; solute_transport 0.310</span></span></code></pre></div>
 </div>
 <div id="visualise-information-gain-per-selection-step" class="section level3">
 <h3>Visualise: information gain per selection step</h3>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">plot_gains</span>(sel)</span></code></pre></div>
-<p><img src="data:image/png;base64,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" /><!-- --></p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">plot_gains</span>(sel)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
 </div>
 </div>
 <div id="track-a-gene-list-enrichment" class="section level2">
@@ -494,59 +518,59 @@ for heatmaps, mediation models, or external regression:</p>
 gene-list lane.</p>
 <div id="enrichment-redundancy-in-gene-space" class="section level3">
 <h3>Enrichment + redundancy in gene space</h3>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Simulate a DE gene list</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>gene_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">1</span><span class="sc">:</span><span class="dv">40</span>],    <span class="dv">30</span>),   <span class="co"># enriched in immune_response</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">300</span><span class="sc">:</span><span class="dv">340</span>], <span class="dv">20</span>),   <span class="co"># enriched in solute_transport</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">100</span><span class="sc">:</span><span class="dv">200</span>], <span class="dv">5</span>)     <span class="co"># a few noise genes</span></span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>))</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co"># MI-scored enrichment</span></span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>enrich <span class="ot">&lt;-</span> <span class="fu">run_info_enrichment</span>(</span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">gene_list =</span> gene_list,</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets,</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="at">universe  =</span> genes,</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">n_perm    =</span> <span class="dv">500</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="at">seed      =</span> <span class="dv">42</span></span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>)</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>enrich[, <span class="fu">c</span>(<span class="st">&quot;set&quot;</span>, <span class="st">&quot;overlap&quot;</span>, <span class="st">&quot;set_size&quot;</span>, <span class="st">&quot;info_bits&quot;</span>, <span class="st">&quot;ratio&quot;</span>,</span>
-<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a>           <span class="st">&quot;padj_emp&quot;</span>, <span class="st">&quot;padj_enrich&quot;</span>)]</span>
-<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a><span class="co">#&gt;                 set overlap set_size  info_bits    ratio   padj_emp</span></span>
-<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a><span class="co">#&gt; 1   immune_response      30       40 0.15479395 6.818182 0.00332668</span></span>
-<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation      25       35 0.11853842 6.493506 0.00332668</span></span>
-<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport      20       41 0.06099989 4.434590 0.00332668</span></span>
-<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       0       31 0.01078215 0.000000 0.03992016</span></span>
-<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       0       31 0.01078215 0.000000 0.04990020</span></span>
-<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a><span class="co">#&gt;    padj_enrich</span></span>
-<span id="cb7-26"><a href="#cb7-26" tabindex="-1"></a><span class="co">#&gt; 1 5.308314e-24</span></span>
-<span id="cb7-27"><a href="#cb7-27" tabindex="-1"></a><span class="co">#&gt; 2 7.209783e-19</span></span>
-<span id="cb7-28"><a href="#cb7-28" tabindex="-1"></a><span class="co">#&gt; 3 1.820082e-10</span></span>
-<span id="cb7-29"><a href="#cb7-29" tabindex="-1"></a><span class="co">#&gt; 5 1.000000e+00</span></span>
-<span id="cb7-30"><a href="#cb7-30" tabindex="-1"></a><span class="co">#&gt; 4 1.000000e+00</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Simulate a DE gene list</span></span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>gene_list <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">c</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">1</span><span class="sc">:</span><span class="dv">40</span>],    <span class="dv">30</span>),   <span class="co"># enriched in immune_response</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">300</span><span class="sc">:</span><span class="dv">340</span>], <span class="dv">20</span>),   <span class="co"># enriched in solute_transport</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="fu">sample</span>(genes[<span class="dv">100</span><span class="sc">:</span><span class="dv">200</span>], <span class="dv">5</span>)     <span class="co"># a few noise genes</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>))</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co"># MI-scored enrichment</span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>enrich <span class="ot">&lt;-</span> <span class="fu">run_info_enrichment</span>(</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">gene_list =</span> gene_list,</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">gene_sets =</span> gene_sets,</span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">universe  =</span> genes,</span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>  <span class="at">n_perm    =</span> <span class="dv">500</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a>  <span class="at">seed      =</span> <span class="dv">42</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a>)</span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a>enrich[, <span class="fu">c</span>(<span class="st">&quot;set&quot;</span>, <span class="st">&quot;overlap&quot;</span>, <span class="st">&quot;set_size&quot;</span>, <span class="st">&quot;info_bits&quot;</span>, <span class="st">&quot;ratio&quot;</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>           <span class="st">&quot;padj_emp&quot;</span>, <span class="st">&quot;padj_enrich&quot;</span>)]</span>
+<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a><span class="co">#&gt;                 set overlap set_size  info_bits    ratio   padj_emp</span></span>
+<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt; 1   immune_response      30       40 0.15335126 6.818182 0.00332668</span></span>
+<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation      25       35 0.11709572 6.493506 0.00332668</span></span>
+<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport      20       41 0.05955720 4.434590 0.00332668</span></span>
+<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       0       31 0.01078215 0.000000 0.03992016</span></span>
+<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       0       31 0.01078215 0.000000 0.04191617</span></span>
+<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt;    padj_enrich</span></span>
+<span id="cb9-26"><a href="#cb9-26" tabindex="-1"></a><span class="co">#&gt; 1 5.308314e-24</span></span>
+<span id="cb9-27"><a href="#cb9-27" tabindex="-1"></a><span class="co">#&gt; 2 7.209783e-19</span></span>
+<span id="cb9-28"><a href="#cb9-28" tabindex="-1"></a><span class="co">#&gt; 3 1.820082e-10</span></span>
+<span id="cb9-29"><a href="#cb9-29" tabindex="-1"></a><span class="co">#&gt; 5 1.000000e+00</span></span>
+<span id="cb9-30"><a href="#cb9-30" tabindex="-1"></a><span class="co">#&gt; 4 1.000000e+00</span></span></code></pre></div>
 <p>Note how <code>immune_regulation</code> is significant by
 hypergeometric p-value (<code>padj_enrich</code>) but has lower MI
 (<code>info_bits</code>) than <code>immune_response</code> because its
 genes are a subset — less informative.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Redundancy selection in gene space</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>sel_gl <span class="ot">&lt;-</span> <span class="fu">run_redundancy_selection</span>(</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">gene_list      =</span> gene_list,</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">gene_sets      =</span> gene_sets,</span>
-<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">universe       =</span> genes,</span>
-<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">initial_scores =</span> <span class="fu">setNames</span>(enrich<span class="sc">$</span>info_bits, enrich<span class="sc">$</span>set),</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">seed           =</span> <span class="dv">42</span></span>
-<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>)</span>
-<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.02322 bits (noise floor = 0.01078, relevance threshold = 0.02322 [15% of leading MI]).</span></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best conditional gain = 0.00359 bits &lt; min_gain = 0.02322.</span></span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a></span>
-<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>sel_gl[, <span class="fu">c</span>(<span class="st">&quot;step&quot;</span>, <span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;marginal_mi&quot;</span>, <span class="st">&quot;conditional_mi&quot;</span>,</span>
-<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>           <span class="st">&quot;redundancy_ratio&quot;</span>)]</span>
-<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt;                  step          pathway marginal_mi conditional_mi</span></span>
-<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; immune_response     1  immune_response  0.15479395      0.1547940</span></span>
-<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a><span class="co">#&gt; solute_transport    2 solute_transport  0.06099989      0.1200256</span></span>
-<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a><span class="co">#&gt;                  redundancy_ratio</span></span>
-<span id="cb8-18"><a href="#cb8-18" tabindex="-1"></a><span class="co">#&gt; immune_response          1.000000</span></span>
-<span id="cb8-19"><a href="#cb8-19" tabindex="-1"></a><span class="co">#&gt; solute_transport         1.967637</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Redundancy selection in gene space</span></span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>sel_gl <span class="ot">&lt;-</span> <span class="fu">run_redundancy_selection</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">gene_list      =</span> gene_list,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">gene_sets      =</span> gene_sets,</span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">universe       =</span> genes,</span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">initial_scores =</span> <span class="fu">setNames</span>(enrich<span class="sc">$</span>info_bits, enrich<span class="sc">$</span>set),</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>  <span class="at">seed           =</span> <span class="dv">42</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a>)</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.023 bits (noise floor = 0.01078, relevance threshold = 0.023 [15% of leading MI]).</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best conditional gain = 0.00215 bits &lt; min_gain = 0.023.</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>sel_gl[, <span class="fu">c</span>(<span class="st">&quot;step&quot;</span>, <span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;marginal_mi&quot;</span>, <span class="st">&quot;conditional_mi&quot;</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>           <span class="st">&quot;redundancy_ratio&quot;</span>)]</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt;                  step          pathway marginal_mi conditional_mi</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt; immune_response     1  immune_response   0.1533513      0.1533513</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; solute_transport    2 solute_transport   0.0595572      0.1185829</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt;                  redundancy_ratio</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; immune_response          1.000000</span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; solute_transport         1.991077</span></span></code></pre></div>
 <p>Gene-space CMI correctly identifies <code>immune_regulation</code> as
 redundant with <code>immune_response</code>.</p>
 </div>
@@ -554,80 +578,80 @@ redundant with <code>immune_response</code>.</p>
 <div id="track-a-gsea-lane" class="section level2">
 <h2>Track A: GSEA lane</h2>
 <p>When you have a full ranked list:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="co"># Gene-level statistics: correlation with phenotype</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>gene_stats <span class="ot">&lt;-</span> <span class="fu">setNames</span>(</span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="fu">apply</span>(expr, <span class="dv">2</span>, <span class="cf">function</span>(g) <span class="fu">cor</span>(g, phenotype)),</span>
-<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  genes</span>
-<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>)</span>
-<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a></span>
-<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>batch <span class="ot">&lt;-</span> <span class="fu">run_batch_gsea</span>(</span>
-<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">gene_sets  =</span> gene_sets,</span>
-<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>  <span class="at">gene_stats =</span> gene_stats,</span>
-<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  <span class="at">n_perm     =</span> <span class="dv">500</span>,</span>
-<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>  <span class="at">adaptive   =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a>  <span class="at">seed       =</span> <span class="dv">42</span></span>
-<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a>)</span>
-<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; Running GSEA on 5 pathways [adaptive = TRUE, mode = &#39;refine&#39;, nthreads = 1].</span></span>
-<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; Done. 3 / 5 pathways significant at padj &lt;= 0.05.</span></span>
-<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt; Adaptive saving: 0 permutations used vs 2,500 fixed equivalent (100% reduction).</span></span>
-<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a></span>
-<span id="cb9-18"><a href="#cb9-18" tabindex="-1"></a>batch<span class="sc">$</span>summary[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;enrichment_score&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;padj&quot;</span>,</span>
-<span id="cb9-19"><a href="#cb9-19" tabindex="-1"></a>                   <span class="st">&quot;leading_edge_size&quot;</span>)]</span>
-<span id="cb9-20"><a href="#cb9-20" tabindex="-1"></a><span class="co">#&gt;             pathway enrichment_score     p_value       padj leading_edge_size</span></span>
-<span id="cb9-21"><a href="#cb9-21" tabindex="-1"></a><span class="co">#&gt; 1   immune_response        1.0000000 0.001996008 0.00332668                40</span></span>
-<span id="cb9-22"><a href="#cb9-22" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation        0.9892473 0.001996008 0.00332668                35</span></span>
-<span id="cb9-23"><a href="#cb9-23" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport        0.8714597 0.001996008 0.00332668                41</span></span>
-<span id="cb9-24"><a href="#cb9-24" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       -0.3871642 1.000000000 1.00000000                12</span></span>
-<span id="cb9-25"><a href="#cb9-25" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       -0.1812367 0.964071856 1.00000000                31</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># Redundancy on leading edges</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>sel_gsea <span class="ot">&lt;-</span> <span class="fu">run_gsea_redundancy_selection</span>(</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">gsea_results =</span> batch<span class="sc">$</span>results,</span>
-<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">gene_stats   =</span> gene_stats,</span>
-<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>  <span class="at">alpha        =</span> <span class="fl">0.05</span>,</span>
-<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>  <span class="at">seed         =</span> <span class="dv">42</span></span>
-<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>)</span>
-<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; 3 / 5 pathways significant at alpha = 0.05.</span></span>
-<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; Leading-edge union: 81 genes (16.2% of universe).</span></span>
-<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt; Computing IT enrichment scores on leading edges...</span></span>
-<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; Running CMI redundancy selection on leading edges...</span></span>
-<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.03708 bits (noise floor = 0.00782, relevance threshold = 0.03708 [15% of leading MI]).</span></span>
-<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best conditional gain = 0 bits &lt; min_gain = 0.03708.</span></span>
-<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a></span>
-<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co"># Classify</span></span>
-<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>classified_gsea <span class="ot">&lt;-</span> <span class="fu">classify_gsea_selection</span>(sel_gsea)</span>
-<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a>classified_gsea[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;signal_class&quot;</span>, <span class="st">&quot;action&quot;</span>)]</span>
-<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt;                           pathway signal_class              action</span></span>
-<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; solute_transport solute_transport  independent report as secondary</span></span>
-<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt; immune_response   immune_response  independent report as secondary</span></span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="co"># Gene-level statistics: correlation with phenotype</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>gene_stats <span class="ot">&lt;-</span> <span class="fu">setNames</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">apply</span>(expr, <span class="dv">2</span>, <span class="cf">function</span>(g) <span class="fu">cor</span>(g, phenotype)),</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  genes</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>)</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>batch <span class="ot">&lt;-</span> <span class="fu">run_batch_gsea</span>(</span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">gene_sets  =</span> gene_sets,</span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="at">gene_stats =</span> gene_stats,</span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="at">n_perm     =</span> <span class="dv">500</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>  <span class="at">adaptive   =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a>  <span class="at">seed       =</span> <span class="dv">42</span></span>
+<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>)</span>
+<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="co">#&gt; Running GSEA on 5 pathways [adaptive = TRUE, mode = &#39;refine&#39;, nthreads = 1].</span></span>
+<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a><span class="co">#&gt; Done. 3 / 5 pathways significant at padj &lt;= 0.05.</span></span>
+<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a><span class="co">#&gt; Refine mode: 5/5 pathways resolved at 500 perms; 0 borderline pathways refined (0 extra perms).</span></span>
+<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>batch<span class="sc">$</span>summary[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;enrichment_score&quot;</span>, <span class="st">&quot;p_value&quot;</span>, <span class="st">&quot;padj&quot;</span>,</span>
+<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>                   <span class="st">&quot;leading_edge_size&quot;</span>)]</span>
+<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt;             pathway enrichment_score     p_value       padj leading_edge_size</span></span>
+<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; 1   immune_response        1.0000000 0.001996008 0.00332668                40</span></span>
+<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt; 2 immune_regulation        0.9892473 0.001996008 0.00332668                35</span></span>
+<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co">#&gt; 3  solute_transport        0.8714597 0.001996008 0.00332668                41</span></span>
+<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt; 4     cell_adhesion       -0.3871642 1.000000000 1.00000000                12</span></span>
+<span id="cb11-25"><a href="#cb11-25" tabindex="-1"></a><span class="co">#&gt; 5  lipid_metabolism       -0.1812367 0.964071856 1.00000000                31</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Redundancy on leading edges</span></span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>sel_gsea <span class="ot">&lt;-</span> <span class="fu">run_gsea_redundancy_selection</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">gsea_results =</span> batch<span class="sc">$</span>results,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">gene_stats   =</span> gene_stats,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">alpha        =</span> <span class="fl">0.05</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="at">seed         =</span> <span class="dv">42</span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>)</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; 3 / 5 pathways significant at alpha = 0.05.</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; Leading-edge union: 81 genes (16.2% of universe).</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; Computing IT enrichment scores on leading edges...</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; Running CMI redundancy selection on leading edges...</span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; Auto-selected min_gain = 0.03708 bits (noise floor = 0.00638, relevance threshold = 0.03708 [15% of leading MI]).</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; Stopping at step 3: best conditional gain = 0 bits &lt; min_gain = 0.03708.</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co"># Classify</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a>classified_gsea <span class="ot">&lt;-</span> <span class="fu">classify_gsea_selection</span>(sel_gsea)</span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a>classified_gsea[, <span class="fu">c</span>(<span class="st">&quot;pathway&quot;</span>, <span class="st">&quot;signal_class&quot;</span>, <span class="st">&quot;action&quot;</span>)]</span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt;                           pathway signal_class              action</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; solute_transport solute_transport  independent report as secondary</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt; immune_response   immune_response  independent report as secondary</span></span></code></pre></div>
 </div>
 <div id="adaptive-permutation-p-values" class="section level2">
 <h2>Adaptive permutation p-values</h2>
 <p>xEnrich reports confidence intervals on permutation p-values. Here is
 one pathway in detail:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">run_enrichment</span>(</span>
-<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">gene_list     =</span> gene_sets<span class="sc">$</span>immune_response,</span>
-<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">gene_stats    =</span> gene_stats,</span>
-<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">method        =</span> <span class="st">&quot;gsea&quot;</span>,</span>
-<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">n_perm        =</span> <span class="dv">500</span>,</span>
-<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">adaptive      =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>  <span class="at">adaptive_mode =</span> <span class="st">&quot;decision&quot;</span>,</span>
-<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a>  <span class="at">alpha         =</span> <span class="fl">0.05</span>,</span>
-<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a>  <span class="at">seed          =</span> <span class="dv">42</span>,</span>
-<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a>  <span class="at">keep_trace    =</span> <span class="cn">TRUE</span></span>
-<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a>)</span>
-<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a></span>
-<span id="cb11-13"><a href="#cb11-13" tabindex="-1"></a>inf <span class="ot">&lt;-</span> res<span class="sc">$</span>inference<span class="sc">$</span>res</span>
-<span id="cb11-14"><a href="#cb11-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(</span>
-<span id="cb11-15"><a href="#cb11-15" tabindex="-1"></a>  <span class="st">&quot;ES = %.3f</span><span class="sc">\n</span><span class="st">p = %.4f</span><span class="sc">\n</span><span class="st">CI = [%.4f, %.4f]</span><span class="sc">\n</span><span class="st">Permutations used: %d</span><span class="sc">\n</span><span class="st">Decision: %s</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
-<span id="cb11-16"><a href="#cb11-16" tabindex="-1"></a>  res<span class="sc">$</span>enrichment_score, inf<span class="sc">$</span>p,</span>
-<span id="cb11-17"><a href="#cb11-17" tabindex="-1"></a>  inf<span class="sc">$</span>p_ci_low, inf<span class="sc">$</span>p_ci_high,</span>
-<span id="cb11-18"><a href="#cb11-18" tabindex="-1"></a>  inf<span class="sc">$</span>B, inf<span class="sc">$</span>decision_alpha</span>
-<span id="cb11-19"><a href="#cb11-19" tabindex="-1"></a>))</span>
-<span id="cb11-20"><a href="#cb11-20" tabindex="-1"></a><span class="co">#&gt; ES = 1.000</span></span>
-<span id="cb11-21"><a href="#cb11-21" tabindex="-1"></a><span class="co">#&gt; p = 0.0066</span></span>
-<span id="cb11-22"><a href="#cb11-22" tabindex="-1"></a><span class="co">#&gt; CI = [0.0012, 0.0366]</span></span>
-<span id="cb11-23"><a href="#cb11-23" tabindex="-1"></a><span class="co">#&gt; Permutations used: 150</span></span>
-<span id="cb11-24"><a href="#cb11-24" tabindex="-1"></a><span class="co">#&gt; Decision: sig</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">run_enrichment</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">gene_list     =</span> gene_sets<span class="sc">$</span>immune_response,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">gene_stats    =</span> gene_stats,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">method        =</span> <span class="st">&quot;gsea&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">n_perm        =</span> <span class="dv">500</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">adaptive      =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">adaptive_mode =</span> <span class="st">&quot;decision&quot;</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">alpha         =</span> <span class="fl">0.05</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">seed          =</span> <span class="dv">42</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">keep_trace    =</span> <span class="cn">TRUE</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>inf <span class="ot">&lt;-</span> res<span class="sc">$</span>inference<span class="sc">$</span>res</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="fu">cat</span>(<span class="fu">sprintf</span>(</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="st">&quot;ES = %.3f</span><span class="sc">\n</span><span class="st">p = %.4f</span><span class="sc">\n</span><span class="st">CI = [%.4f, %.4f]</span><span class="sc">\n</span><span class="st">Permutations used: %d</span><span class="sc">\n</span><span class="st">Decision: %s</span><span class="sc">\n</span><span class="st">&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>  res<span class="sc">$</span>enrichment_score, inf<span class="sc">$</span>p,</span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a>  inf<span class="sc">$</span>p_ci_low, inf<span class="sc">$</span>p_ci_high,</span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a>  inf<span class="sc">$</span>B, inf<span class="sc">$</span>decision_alpha</span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>))</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a><span class="co">#&gt; ES = 1.000</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a><span class="co">#&gt; p = 0.0066</span></span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a><span class="co">#&gt; CI = [0.0012, 0.0366]</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#&gt; Permutations used: 150</span></span>
+<span id="cb13-24"><a href="#cb13-24" tabindex="-1"></a><span class="co">#&gt; Decision: sig</span></span></code></pre></div>
 <p>The Wilson confidence interval makes the uncertainty in the p-value
 estimate explicit. Standard tools report only the point estimate.</p>
 </div>
@@ -636,37 +660,37 @@ estimate explicit. Standard tools report only the point estimate.</p>
 <p>Track B requires Human Protein Atlas and Tabula Sapiens reference
 data. These are downloaded once via <code>load_reference()</code> and
 cached locally:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># Not run — requires network access on first call</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>hpa_rna       <span class="ot">&lt;-</span> <span class="fu">load_reference</span>(<span class="st">&quot;rna_hpa&quot;</span>, <span class="at">source =</span> <span class="st">&quot;hpa&quot;</span>)[[<span class="dv">1</span>]]</span>
-<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>tabula_kidney <span class="ot">&lt;-</span> <span class="fu">load_reference</span>(<span class="st">&quot;kidney&quot;</span>,  <span class="at">source =</span> <span class="st">&quot;tabula&quot;</span>)[[<span class="dv">1</span>]]</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># Not run — requires network access on first call</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>hpa_rna       <span class="ot">&lt;-</span> <span class="fu">load_reference</span>(<span class="st">&quot;rna_hpa&quot;</span>, <span class="at">source =</span> <span class="st">&quot;hpa&quot;</span>)[[<span class="dv">1</span>]]</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>tabula_kidney <span class="ot">&lt;-</span> <span class="fu">load_reference</span>(<span class="st">&quot;kidney&quot;</span>,  <span class="at">source =</span> <span class="st">&quot;tabula&quot;</span>)[[<span class="dv">1</span>]]</span></code></pre></div>
 <div id="tissue-level-enrichment" class="section level3">
 <h3>Tissue-level enrichment</h3>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Tissue enrichment using HPA RNA data</span></span>
-<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>tissue_result <span class="ot">&lt;-</span> <span class="fu">enrich_by_hpa</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">gene_list      =</span> my_gene_list,</span>
-<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">reference_df   =</span> hpa_rna,</span>
-<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">group_col      =</span> <span class="st">&quot;Tissue&quot;</span>,</span>
-<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">expression_col =</span> <span class="st">&quot;nTPM&quot;</span>,</span>
-<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">method         =</span> <span class="st">&quot;hypergeometric&quot;</span>,</span>
-<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">cutoff_type    =</span> <span class="st">&quot;quantile&quot;</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">cutoff_value   =</span> <span class="fl">0.9</span>,</span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">universe       =</span> my_universe,</span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">universe_type  =</span> <span class="st">&quot;provided&quot;</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co"># Tissue enrichment using HPA RNA data</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>tissue_result <span class="ot">&lt;-</span> <span class="fu">enrich_by_hpa</span>(</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">gene_list      =</span> my_gene_list,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">reference_df   =</span> hpa_rna,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">group_col      =</span> <span class="st">&quot;Tissue&quot;</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">expression_col =</span> <span class="st">&quot;nTPM&quot;</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">method         =</span> <span class="st">&quot;hypergeometric&quot;</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">cutoff_type    =</span> <span class="st">&quot;quantile&quot;</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  <span class="at">cutoff_value   =</span> <span class="fl">0.9</span>,</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>  <span class="at">universe       =</span> my_universe,</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>  <span class="at">universe_type  =</span> <span class="st">&quot;provided&quot;</span></span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a>)</span></code></pre></div>
 </div>
 <div id="full-pipeline-organ-cell-type" class="section level3">
 <h3>Full pipeline: organ → cell type</h3>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co"># All-in-one: HPA tissue enrichment -&gt; Tabula cell-type drill-down</span></span>
-<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>pipeline <span class="ot">&lt;-</span> <span class="fu">run_location_pipeline</span>(</span>
-<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">gene_list   =</span> my_gene_list,</span>
-<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">hpa_data    =</span> hpa_rna,</span>
-<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">tabula_data =</span> <span class="fu">list</span>(<span class="at">kidney =</span> tabula_kidney),</span>
-<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>  <span class="at">hpa_type    =</span> <span class="st">&quot;rna&quot;</span>,</span>
-<span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a>  <span class="at">seed        =</span> <span class="dv">42</span></span>
-<span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a>)</span>
-<span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="fu">print</span>(pipeline)    <span class="co"># organ-level summary</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="fu">summary</span>(pipeline)  <span class="co"># flat data frame of top cell types</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co"># All-in-one: HPA tissue enrichment -&gt; Tabula cell-type drill-down</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>pipeline <span class="ot">&lt;-</span> <span class="fu">run_location_pipeline</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">gene_list   =</span> my_gene_list,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">hpa_data    =</span> hpa_rna,</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">tabula_data =</span> <span class="fu">list</span>(<span class="at">kidney =</span> tabula_kidney),</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>  <span class="at">hpa_type    =</span> <span class="st">&quot;rna&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  <span class="at">seed        =</span> <span class="dv">42</span></span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>)</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="fu">print</span>(pipeline)    <span class="co"># organ-level summary</span></span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="fu">summary</span>(pipeline)  <span class="co"># flat data frame of top cell types</span></span></code></pre></div>
 </div>
 </div>
 <div id="convergence-what-where" class="section level2">
@@ -683,35 +707,35 @@ existing tool provides.</p>
 </div>
 <div id="session-info" class="section level2">
 <h2>Session info</h2>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.1 (2025-06-13 ucrt)</span></span>
-<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; Running under: Windows 10 x64 (build 19045)</span></span>
-<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
-<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt;   LAPACK version 3.12.1</span></span>
-<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
-<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a><span class="co">#&gt; [1] LC_COLLATE=English_Australia.utf8  LC_CTYPE=English_Australia.utf8   </span></span>
-<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a><span class="co">#&gt; [3] LC_MONETARY=English_Australia.utf8 LC_NUMERIC=C                      </span></span>
-<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a><span class="co">#&gt; [5] LC_TIME=English_Australia.utf8    </span></span>
-<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a><span class="co">#&gt; time zone: Australia/Sydney</span></span>
-<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a><span class="co">#&gt; tzcode source: internal</span></span>
-<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
-<span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
-<span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
-<span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a><span class="co">#&gt; [1] xEnrich_0.0.0.9000</span></span>
-<span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
-<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt;  [1] digest_0.6.37     R6_2.6.1          fastmap_1.2.0     Matrix_1.7-3     </span></span>
-<span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="co">#&gt;  [5] xfun_0.52         lattice_0.22-7    cachem_1.1.0      knitr_1.50       </span></span>
-<span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt;  [9] htmltools_0.5.8.1 rmarkdown_2.29    lifecycle_1.0.4   cli_3.6.5        </span></span>
-<span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt; [13] grid_4.5.1        sass_0.4.10       jquerylib_0.1.4   compiler_4.5.1   </span></span>
-<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt; [17] rstudioapi_0.17.1 tools_4.5.1       evaluate_1.0.4    bslib_0.9.0      </span></span>
-<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="co">#&gt; [21] yaml_2.3.10       rlang_1.1.6       jsonlite_2.0.0</span></span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co">#&gt; R version 4.5.1 (2025-06-13 ucrt)</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#&gt; Platform: x86_64-w64-mingw32/x64</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="co">#&gt; Running under: Windows 10 x64 (build 19045)</span></span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a><span class="co">#&gt;   LAPACK version 3.12.1</span></span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a><span class="co">#&gt; locale:</span></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a><span class="co">#&gt; [1] LC_COLLATE=English_Australia.utf8  LC_CTYPE=English_Australia.utf8   </span></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a><span class="co">#&gt; [3] LC_MONETARY=English_Australia.utf8 LC_NUMERIC=C                      </span></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a><span class="co">#&gt; [5] LC_TIME=English_Australia.utf8    </span></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="co">#&gt; time zone: Australia/Sydney</span></span>
+<span id="cb18-15"><a href="#cb18-15" tabindex="-1"></a><span class="co">#&gt; tzcode source: internal</span></span>
+<span id="cb18-16"><a href="#cb18-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-17"><a href="#cb18-17" tabindex="-1"></a><span class="co">#&gt; attached base packages:</span></span>
+<span id="cb18-18"><a href="#cb18-18" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
+<span id="cb18-19"><a href="#cb18-19" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-20"><a href="#cb18-20" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
+<span id="cb18-21"><a href="#cb18-21" tabindex="-1"></a><span class="co">#&gt; [1] xEnrich_0.1.0</span></span>
+<span id="cb18-22"><a href="#cb18-22" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb18-23"><a href="#cb18-23" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
+<span id="cb18-24"><a href="#cb18-24" tabindex="-1"></a><span class="co">#&gt;  [1] digest_0.6.37     R6_2.6.1          fastmap_1.2.0     Matrix_1.7-3     </span></span>
+<span id="cb18-25"><a href="#cb18-25" tabindex="-1"></a><span class="co">#&gt;  [5] xfun_0.52         lattice_0.22-7    cachem_1.1.0      knitr_1.50       </span></span>
+<span id="cb18-26"><a href="#cb18-26" tabindex="-1"></a><span class="co">#&gt;  [9] htmltools_0.5.8.1 rmarkdown_2.29    lifecycle_1.0.4   cli_3.6.5        </span></span>
+<span id="cb18-27"><a href="#cb18-27" tabindex="-1"></a><span class="co">#&gt; [13] grid_4.5.1        sass_0.4.10       jquerylib_0.1.4   compiler_4.5.1   </span></span>
+<span id="cb18-28"><a href="#cb18-28" tabindex="-1"></a><span class="co">#&gt; [17] rstudioapi_0.17.1 tools_4.5.1       evaluate_1.0.4    bslib_0.9.0      </span></span>
+<span id="cb18-29"><a href="#cb18-29" tabindex="-1"></a><span class="co">#&gt; [21] yaml_2.3.10       rlang_1.1.6       jsonlite_2.0.0</span></span></code></pre></div>
 </div>
 
 

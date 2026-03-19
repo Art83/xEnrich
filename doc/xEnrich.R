@@ -68,6 +68,21 @@ classified <- classify_assoc_selection(sel)
 
 classified[, c("pathway", "marginal_strength", "signal_class", "action")]
 
+## ----summarize----------------------------------------------------------------
+summary_sel <- summarize_selection(classified, expr, phenotype, gene_sets)
+
+summary_sel[, c("pathway", "signal_class", "marginal_r2",
+                "incremental_r2", "cumulative_r2")]
+
+## ----summarize-headline-------------------------------------------------------
+cat(sprintf(
+  "%d independent pathways explain %.1f%% of phenotype variance (adj R2 = %.1f%%)\n",
+  nrow(summary_sel),
+  attr(summary_sel, "total_r2") * 100,
+  attr(summary_sel, "adj_r2") * 100
+))
+cat(sprintf("Residual unexplained: %.1f%%\n", attr(summary_sel, "residual_pct")))
+
 ## ----activity-----------------------------------------------------------------
 act <- compute_pathway_activity(
   expr      = expr,

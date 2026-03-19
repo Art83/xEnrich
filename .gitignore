@@ -20,3 +20,5 @@ inst/doc/
 # OS files
 Thumbs.db
 desktop.ini
+/doc/
+/Meta/

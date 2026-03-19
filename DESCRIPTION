@@ -17,7 +17,6 @@ Description: A unified framework for translating omics results into biological
     but where in the body and in which cell type the changes are most relevant.
     Reference data (Human Protein Atlas and Tabula Sapiens) is hosted on Zenodo 
     (https://doi.org/10.5281/zenodo.19106109) and cached locally on first use.
-
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
