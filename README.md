@@ -2,6 +2,7 @@
 
 [![R-CMD-check](https://github.com/Art83/xEnrich/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Art83/xEnrich/actions/workflows/R-CMD-check.yaml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19108669.svg)](https://doi.org/10.5281/zenodo.19108669)
+[![Codecov](https://codecov.io/gh/Art83/xEnrich/branch/master/graph/badge.svg)](https://codecov.io/gh/Art83/xEnrich)
 
 **xEnrich** is an R package that translates differential omics results into
 biological context — answering not just *which* pathways are altered but
