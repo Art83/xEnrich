@@ -52,7 +52,9 @@ convenience rather than a statistical necessity.}
 \item{nthreads}{Positive integer. Number of threads for the permutation
 loop via \code{parallel::mclapply}. Default \code{1L} (no parallelism).
 Values > 1 are silently reduced to 1 on Windows where forking is
-unavailable.}
+unavailable. On Linux/macOS the expression matrix is shared
+copy-on-write between workers, so memory overhead per additional thread
+is negligible.}
 
 \item{seed}{Optional integer passed to \code{\link[=set.seed]{set.seed()}}. \code{NULL} (default)
 leaves the RNG state untouched.}
@@ -110,10 +112,13 @@ p-values — but absolute \code{MI_bits} values should not be compared
 across datasets of different sizes.
 
 When \code{nbins = NULL} (default), bins are chosen automatically via a
-composite rule: Rice rule (\eqn{2n^{1/3}}) capped at
-\eqn{\lfloor n/5 \rfloor} (expected cell frequency \eqn{\geq 5}) and
-hard-capped at 20 to limit sparse-cell inflation. Pass an explicit
-integer to override.
+composite rule: Rice rule (\eqn{2n^{1/3}}) capped to ensure an
+expected frequency of at least 5 per \strong{joint} cell (not per
+marginal bin). For continuous phenotype the joint table has
+\eqn{nbins^2} cells, giving \eqn{nbins \leq \lfloor\sqrt{n/5}\rfloor}.
+For binary phenotype the joint table has only \eqn{2 \times nbins}
+cells, allowing larger \eqn{nbins}. A hard cap of 20 applies in
+either case. Pass an explicit integer to override.
 }
 
 \section{No external dependencies}{
@@ -150,9 +155,11 @@ head(res)
 }
 \references{
 Paninski, L. (2003). Estimation of entropy and mutual information.
-\emph{Neural Computation}, 15(6), 1191–1253.
+\emph{Neural Computation}, 15(6), 1191-1253.
 }
 \seealso{
 \code{\link[=run_info_enrichment]{run_info_enrichment()}} for the gene-list (ORA) flavour,
-\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA.
+\code{\link[=run_enrichment]{run_enrichment()}} for classical ORA/GSEA,
+\code{\link[=compute_pathway_activity]{compute_pathway_activity()}} to extract per-sample activity scores
+from selected pathways for downstream analysis.
 }

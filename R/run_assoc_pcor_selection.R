@@ -321,10 +321,6 @@ run_assoc_pcor_selection <- function(
       break
     }
 
-    best_idx  <- which.min(p_vals * (!passes) + p_vals * passes *
-                             (p_vals == min(p_vals[passes])) +
-                             (1 - as.numeric(passes)))
-    # simpler: just pick lowest p among passing
     best_idx  <- which(passes)[which.min(p_vals[passes])]
     best_name <- remaining[best_idx]
     best_pcor <- pcor_vals[best_idx]

@@ -8,7 +8,7 @@ enrich_by_tabula(
   gene_list,
   reference_df,
   method = c("hypergeometric", "gsea"),
-  cutoff_type = c("quantile", "threshold", "top_k"),
+  cutoff_type = c("quantile", "threshold", "top_k", "specificity"),
   cutoff_value = 0.9,
   min_pct_expr = 0.1,
   universe = NULL,
@@ -30,21 +30,22 @@ organ. Must contain columns \code{GeneSymbol}, \code{CellType},
 
 \item{method}{Character. \code{"hypergeometric"} (default) or \code{"gsea"}.}
 
-\item{cutoff_type}{Character. How to discretise expression for the
-hypergeometric test:
+\item{cutoff_type}{Character. How to define the expressed gene set per
+cell type for the hypergeometric test. Ignored when \code{method = "gsea"}.
 \describe{
+\item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
+quantile within the cell type (must be in (0, 1)). Default.}
 \item{\code{"threshold"}}{Genes with mean expression strictly above
 \code{cutoff_value}.}
-\item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
-quantile (must be in (0, 1)).}
 \item{\code{"top_k"}}{Top \code{cutoff_value} genes by mean expression
 (\code{cutoff_value} must be a positive integer).}
-}
-Ignored when \code{method = "gsea"}.}
+\item{\code{"specificity"}}{Genes whose mean expression in the cell type
+is at least \code{cutoff_value}-fold above the mean across all other
+cell types in the organ. See the specificity section above.}
+}}
 
 \item{cutoff_value}{Numeric. Threshold interpreted per \code{cutoff_type}.
-Default \code{0.3} (log-normalised expression; suitable for
-\code{"threshold"}).}
+Default \code{0.9} for quantile. Use \code{3} for specificity.}
 
 \item{min_pct_expr}{Numeric in [0, 1]. Minimum fraction of cells in a
 cell type that must express a gene for it to be included in the
@@ -63,8 +64,7 @@ the cell type being tested.}
 }}
 
 \item{min_overlap}{Integer. Minimum overlap between \code{gene_list} and
-the cell-type universe. Cell types below this threshold are silently
-skipped. Default \code{1}.}
+the cell-type universe. Default \code{1}.}
 
 \item{min_background}{Integer. Minimum background size to attempt
 enrichment. Default \code{10}.}
@@ -108,6 +108,32 @@ from the background for that cell type before enrichment. This prevents
 \code{MeanLogNorm} values inflated by a few outlier cells from entering
 the analysis. A value of \code{0.1} (10\\% of cells) is a standard
 threshold in scRNA analysis.
+}
+
+\section{cutoff_type = "specificity"}{
+
+Unlike the other cutoff types, which rank genes by expression level within
+a single cell type, \code{"specificity"} computes a cross-cell-type fold
+change: a gene is included if its mean expression in the cell type is at
+least \code{cutoff_value}-fold above the mean across all \emph{other} cell
+types in the same organ. This identifies genes that are distinctive to a
+cell type rather than merely highly expressed in it.
+
+The distinction matters for interpretation: a quantile cutoff answers "which
+cell types express my query genes at high absolute levels?"; specificity
+answers "which cell types are my query genes distinctive to?" For most
+biomarker discovery questions, specificity is the more informative question.
+
+This is conceptually equivalent to TissueEnrich's tissue-enriched gene
+definition applied at the cell-type level within a single organ, using
+the same cross-group fold-change approach as
+\code{\link{enrich_by_hpa}(..., cutoff_type = "specificity")}.
+
+Typical \code{cutoff_value} for cell-type specificity: \code{2} (moderate,
+includes co-expressed genes), \code{3} (default, selective), \code{5}
+(stringent, tissue-enriched equivalent). Lower than HPA tissue specificity
+because cell types within one organ share more genes than tissues across
+the whole body.
 }
 
 \seealso{

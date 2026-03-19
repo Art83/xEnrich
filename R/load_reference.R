@@ -1,5 +1,5 @@
 # Package-level constant. change once for production
-.ZENODO_RECORD_ID <- 441892L
+.ZENODO_RECORD_ID <- 19106109L
 
 
 #' Load reference datasets from Zenodo cache
@@ -123,7 +123,7 @@ xEnrich_cache_dir <- function() {
          ". Set verify = FALSE to skip (not recommended).")
 
   url <- paste0(
-    "https://sandbox.zenodo.org/api/records/",
+    "https://zenodo.org/api/records/",
     .ZENODO_RECORD_ID,
     "/files/", filename, "/content"
   )

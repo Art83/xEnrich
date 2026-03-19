@@ -35,7 +35,7 @@
 #'   \item \code{"redundant"}: ratio < \code{ratio_partial}. Largely
 #'     captured by earlier pathways. Dismiss from primary reporting.
 #'   \item \code{"suppressor"}: \code{is_suppressor == TRUE}. Conditional
-#'     MI exceeded marginal MI after orthogonalisation — selection was
+#'     MI exceeded marginal MI after orthogonalisation -- selection was
 #'     driven by noise interaction with already-selected pathways.
 #'     Inspect before reporting.
 #' }
@@ -44,11 +44,11 @@
 #' since it signals a potential artifact regardless of ratio magnitude.
 #'
 #' @section Threshold guidance:
-#' Defaults are calibrated for typical omics datasets (n = 100–500 samples,
+#' Defaults are calibrated for typical omics datasets (n = 100-500 samples,
 #' Reactome pathway gene sets). Adjust for your context:
 #' \itemize{
-#'   \item Noisier data (n < 100): lower \code{z_strong} to 7, \code{z_moderate}
-#'     to 3.
+#'   \item Noisier data (n < 100): lower \code{z_strong} to 7,
+#'     \code{z_moderate} to 3.
 #'   \item Many correlated pathways (e.g. GO terms): raise
 #'     \code{ratio_independent} to 0.6.
 #'   \item Conservative reporting: raise \code{ratio_primary} to 0.8.
@@ -70,20 +70,17 @@
 #'
 #' @return The input data frame with three additional columns appended:
 #'   \describe{
-#'     \item{\code{marginal_strength}}{Factor: \code{"strong"},
-#'       \code{"moderate"}, or \code{"weak"}. Ordered from strongest
-#'       to weakest.}
-#'     \item{\code{signal_class}}{Factor: \code{"primary"},
-#'       \code{"independent"}, \code{"partial"}, \code{"redundant"}, or
-#'       \code{"suppressor"}. Ordered from most to least reportable.}
-#'     \item{\code{action}}{Character. Plain-language recommendation:
-#'       \code{"report"}, \code{"report as secondary"},
-#'       \code{"mention as correlated"}, \code{"dismiss"}, or
-#'       \code{"inspect — possible artifact"}.}
+#'     \item{\code{marginal_strength}}{Ordered factor: \code{"strong"},
+#'       \code{"moderate"}, \code{"weak"}.}
+#'     \item{\code{signal_class}}{Ordered factor: \code{"primary"},
+#'       \code{"independent"}, \code{"partial"}, \code{"redundant"},
+#'       \code{"suppressor"}.}
+#'     \item{\code{action}}{Character. Plain-language reporting
+#'       recommendation.}
 #'   }
 #'
 #' @seealso \code{\link{run_assoc_redundancy_selection}} for the upstream
-#'   selection step. \code{\link{plot_gains}} to visualise the selection
+#'   selection step, \code{\link{plot_gains}} to visualise the selection
 #'   profile.
 #'
 #' @examples
@@ -132,15 +129,17 @@ classify_assoc_selection <- function(
 
   required <- c("pathway", "redundancy_ratio", "z_score", "marginal_mi")
   missing  <- setdiff(required, colnames(sel_result))
-  if (length(missing) > 0)
+  if (length(missing) > 0L)
     stop("Missing columns in `sel_result`: ", paste(missing, collapse = ", "),
          ". Pass the direct output of run_assoc_redundancy_selection().")
 
   if (!("is_suppressor" %in% colnames(sel_result))) {
-    warning(
-      "`is_suppressor` column not found. Suppressor detection requires ",
-      "run_assoc_redundancy_selection() >= 0.1. Treating all as non-suppressors."
-    )
+    # Double residualisation (v0.0.0.9001+) does not produce the suppressor
+    # artifact. Ratios > 1 are legitimate synergy: after removing pathway A's
+    # contribution from both candidate and phenotype, an independent pathway B
+    # may become MORE informative about the residual than it was about the
+    # original phenotype (the first selection reduced noise, concentrating
+    # the remaining signal). This is expected and biologically meaningful.
     sel_result$is_suppressor <- FALSE
   }
 
@@ -151,13 +150,22 @@ classify_assoc_selection <- function(
   if (z_strong <= z_moderate || z_moderate <= 0)
     stop("Thresholds must satisfy: z_strong > z_moderate > 0.")
 
-  ## --- Marginal strength -----------------------------------------------------
-  z <- sel_result$z_score
+  z       <- sel_result$z_score
+  ratio   <- sel_result$redundancy_ratio
+  is_supp <- sel_result$is_suppressor
 
-  marginal_strength <- dplyr::case_when(
-    z >= z_strong   ~ "strong",
-    z >= z_moderate ~ "moderate",
-    TRUE            ~ "weak"
+  # For classification, cap ratio at 1.0. Values > 1 indicate synergy
+  # (conditional MI exceeds marginal MI after double residualisation) and
+  # are strictly more independent than ratio = 1. The raw ratio is
+  # preserved in the output for transparency; only the classification
+  # thresholds operate on the capped value.
+  ratio_capped <- pmin(ratio, 1.0)
+
+  ## --- Marginal strength -----------------------------------------------------
+  marginal_strength <- ifelse(
+    z >= z_strong,
+    "strong",
+    ifelse(z >= z_moderate, "moderate", "weak")
   )
   marginal_strength <- factor(
     marginal_strength,
@@ -166,15 +174,18 @@ classify_assoc_selection <- function(
   )
 
   ## --- Signal class ----------------------------------------------------------
-  ratio   <- sel_result$redundancy_ratio
-  is_supp <- sel_result$is_suppressor
-
-  signal_class <- dplyr::case_when(
-    is_supp                                              ~ "suppressor",
-    ratio >= ratio_primary   & z >= z_strong             ~ "primary",
-    ratio >= ratio_independent                           ~ "independent",
-    ratio >= ratio_partial                               ~ "partial",
-    TRUE                                                 ~ "redundant"
+  signal_class <- ifelse(
+    is_supp,
+    "suppressor",
+    ifelse(
+      ratio_capped >= ratio_primary & z >= z_strong,
+      "primary",
+      ifelse(
+        ratio_capped >= ratio_independent,
+        "independent",
+        ifelse(ratio_capped >= ratio_partial, "partial", "redundant")
+      )
+    )
   )
   signal_class <- factor(
     signal_class,
@@ -183,16 +194,30 @@ classify_assoc_selection <- function(
   )
 
   ## --- Plain-language action -------------------------------------------------
-  action <- dplyr::case_when(
-    signal_class == "suppressor"                                        ~ "inspect, possible artifact",
-    signal_class == "redundant"                                         ~ "dismiss",
-    signal_class == "primary"                                           ~ "report",
-    signal_class == "independent" & marginal_strength == "strong"      ~ "report as secondary",
-    signal_class == "independent" & marginal_strength == "moderate"    ~ "report as secondary",
-    signal_class == "independent" & marginal_strength == "weak"        ~ "low confidence, treat cautiously",
-    signal_class == "partial"     & marginal_strength == "strong"      ~ "mention as correlated",
-    signal_class == "partial"     & marginal_strength %in% c("moderate", "weak") ~ "dismiss",
-    TRUE                                                                ~ "dismiss"
+  action <- ifelse(
+    signal_class == "suppressor",
+    "inspect, possible artifact",
+    ifelse(
+      signal_class == "redundant",
+      "dismiss",
+      ifelse(
+        signal_class == "primary",
+        "report",
+        ifelse(
+          signal_class == "independent" & marginal_strength %in% c("strong", "moderate"),
+          "report as secondary",
+          ifelse(
+            signal_class == "independent" & marginal_strength == "weak",
+            "low confidence, treat cautiously",
+            ifelse(
+              signal_class == "partial" & marginal_strength == "strong",
+              "mention as correlated",
+              "dismiss"
+            )
+          )
+        )
+      )
+    )
   )
 
   ## --- Append and return -----------------------------------------------------

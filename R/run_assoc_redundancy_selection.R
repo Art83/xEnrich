@@ -26,37 +26,44 @@
 #'   \item Discretise all activity scores using equal-frequency binning.
 #'   \item Select the pathway with the highest
 #'     I(activity ; phenotype) as the first pathway.
-#'   \item Regress the phenotype on the selected pathway's activity.
-#'     Carry the residuals forward as the new response variable.
-#'   \item For each subsequent step, compute
-#'     I(activity_j ; residual phenotype). A pathway redundant with
-#'     already-selected ones will have activity already captured by the
-#'     regression, its MI with the residuals collapses toward zero.
+#'   \item For each subsequent step, compute conditional MI via
+#'     \strong{double residualisation}: regress both the candidate
+#'     pathway's activity and the phenotype on all previously selected
+#'     pathway activities. Discretise both residual vectors and compute
+#'     MI between them. A pathway redundant with already-selected ones
+#'     will have its activity largely explained by the regression; its
+#'     residual MI with the phenotype residual collapses toward zero.
 #'   \item Select the pathway with the highest residual MI exceeding
-#'     \code{min_gain}. Update residuals by re-fitting with all selected
-#'     pathways. Stop when no pathway clears the threshold or
-#'     \code{max_pathways} is reached.
+#'     \code{min_gain}. Update the selected set. Stop when no pathway
+#'     clears the threshold or \code{max_pathways} is reached.
 #' }
 #'
-#' @section Residual conditioning vs mean activity:
-#' Earlier versions used discretised mean activity of selected pathways
-#' as the conditioning variable (standard CMI stratification). This
-#' caused a synergy artifact: correlated pathways inflated each other's
-#' conditional MI above their marginal MI, preventing correct redundancy
-#' detection. Residual conditioning avoids this by directly removing
-#' explained variance from the response, the linear regression
-#' explicitly accounts for correlations among selected pathways before
-#' evaluating each candidate.
+#' @section Double residualisation:
+#' The conditional MI at each step is estimated by orthogonalising both
+#' the candidate activity \emph{and} the phenotype against all selected
+#' pathway activities, then measuring MI between the two residual
+#' vectors. This is the non-parametric analog of partial correlation:
+#' it asks whether the candidate explains phenotypic variance that no
+#' previously selected pathway accounts for. Crucially, by
+#' residualising \emph{both} sides, the method avoids the suppressor
+#' artifact that arises when only the candidate is orthogonalised (in
+#' which case its residual can pick up noise patterns correlated with
+#' the original phenotype, inflating conditional MI above marginal MI).
+#' With double residualisation, conditional MI is approximately bounded
+#' by marginal MI, so \code{redundancy_ratio} stays close to \eqn{[0, 1]}.
 #'
 #' @section Redundancy ratio interpretation:
 #' As in \code{\link{run_redundancy_selection}}, the redundancy ratio
 #' \code{conditional_mi / marginal_mi} is the primary interpretive output.
 #' A ratio near 1 means the pathway's phenotypic association is
-#' independent of all previously selected pathways, it explains variance
+#' independent of all previously selected pathways; it explains variance
 #' in the phenotype that no prior selection accounts for. A ratio near 0
 #' means the pathway's association is entirely mediated by previously
-#' selected pathways, it is a correlated shadow, not an independent
-#' signal.
+#' selected pathways; it is a correlated shadow, not an independent
+#' signal. With double residualisation, the ratio is approximately
+#' bounded by 1; values slightly exceeding 1 can occur due to
+#' finite-sample discretisation noise but are not systematically
+#' inflated.
 #'
 #' @section Connection to run_info_assoc:
 #' Pass the output of \code{\link{run_info_assoc}} directly as
@@ -106,6 +113,9 @@
 #'       activities) in bits. Equals \code{marginal_mi} at step 1.}
 #'     \item{\code{redundancy_ratio}}{\code{conditional_mi /
 #'       marginal_mi}. Near 1 = independent; near 0 = redundant.}
+#'     \item{\code{cumulative_bits}}{Running total of
+#'       \code{conditional_mi}. Interpretable as total unique
+#'       information explained by the selected set.}
 #'     \item{\code{p_value}}{Original \code{p_value} from
 #'       \code{assoc_results}.}
 #'     \item{\code{padj}}{Original \code{padj} from
@@ -241,8 +251,12 @@ run_assoc_redundancy_selection <- function(
 
   ## --- Binning ---------------------------------------------------------------
   n <- nrow(expr)
+  is_continuous_pheno <- is.numeric(phenotype) && length(unique(phenotype)) > 2L
+
   if (is.null(nbins)) {
-    nbins <- .auto_nbins(n)
+    nbins_y_hint <- if (is_continuous_pheno) NULL else
+      length(unique(phenotype))
+    nbins <- .auto_nbins(n, nbins_y = nbins_y_hint)
     message("Auto-selected nbins = ", nbins, ".")
   } else {
     nbins <- as.integer(nbins)
@@ -301,9 +315,7 @@ run_assoc_redundancy_selection <- function(
     marginal_mi      = numeric(0),
     conditional_mi   = numeric(0),
     redundancy_ratio = numeric(0),
-    is_suppressor    = logical(0),
-    #Change re:ratio becomes well over 1 due to unbounded residuals
-    #cumulative_bits  = numeric(0),
+    cumulative_bits  = numeric(0),
     p_value          = numeric(0),
     padj             = numeric(0),
     z_score          = numeric(0),
@@ -323,18 +335,11 @@ run_assoc_redundancy_selection <- function(
 
   selected   <- best_name
   remaining  <- setdiff(sig_sets, best_name)
-  #Change re:ratio becomes well over 1 due to unbounded residuals
-
-  # phenotype_num <- as.numeric(phenotype)
-  # selected_df   <- data.frame(a1 = activity[[best_name]])
-  # fit           <- lm(phenotype_num ~ ., data = selected_df)
-  # resid_current <- residuals(fit)
-  # cum_bits      <- best_gain
+  phenotype_num <- as.numeric(phenotype)
 
   selected_mat <- matrix(activity[[best_name]], ncol = 1L,
                          dimnames = list(NULL, best_name))
-  #Change re:ratio becomes well over 1 due to unbounded residuals
-  #cum_bits <- best_gain
+  cum_bits <- best_gain
 
   assoc_lookup <- setNames(
     split(sig_assoc, seq_len(nrow(sig_assoc))),
@@ -349,9 +354,7 @@ run_assoc_redundancy_selection <- function(
     marginal_mi      = best_gain,
     conditional_mi   = best_gain,
     redundancy_ratio = 1,
-    is_suppressor    = FALSE,
-    #Change re:ratio becomes well over 1 due to unbounded residuals
-    #cumulative_bits  = cum_bits,
+    cumulative_bits  = cum_bits,
     p_value          = assoc_lookup[[best_name]]$p_value,
     padj             = assoc_lookup[[best_name]]$padj,
     z_score          = assoc_lookup[[best_name]]$z_score,
@@ -359,6 +362,19 @@ run_assoc_redundancy_selection <- function(
   )
 
   ## --- Greedy forward steps --------------------------------------------------
+  # Double residualisation: orthogonalise BOTH candidate activity and phenotype
+  # against all selected pathway activities, then measure MI between residuals.
+  # This is the non-parametric analog of partial correlation and avoids the
+  # suppressor artifact that arises from single-sided residualisation.
+  #
+  # IMPORTANT: after regression, both residuals are continuous even if the
+  # original phenotype was binary. The joint table for residual MI is
+  # nbins_resid x nbins_resid (symmetric), not nbins x nbins_y. We must
+  # use a bin count appropriate for the continuous-continuous case to avoid
+  # sparse-cell MI inflation (which causes all ratios >> 1).
+
+  nbins_resid <- .auto_nbins(n, nbins_y = NULL)
+
   n_steps <- min(max_pathways, length(sig_sets))
   if (n_steps < 2L) {
     res <- do.call(rbind, Filter(Negate(is.null), log_rows))
@@ -373,27 +389,16 @@ run_assoc_redundancy_selection <- function(
   for (step in seq(2L, n_steps)) {
     if (length(remaining) == 0L) break
 
-    # MI(activity_j ; residual phenotype)
-    #Change re:ratio becomes well over 1 due to unbounded residuals
-    # resid_disc <- .discretize_equalfreq(resid_current, nbins)
-    # cmi_vals <- vapply(
-    #   remaining,
-    #   function(nm) .mutual_information(activity_disc[[nm]], resid_disc),
-    #   numeric(1L)
-    # )
+    # Phenotype residuals (shared across all candidates at this step)
+    y_resid <- residuals(lm(phenotype_num ~ selected_mat))
+    y_resid_disc <- .discretize_equalfreq(y_resid, nbins_resid)
 
     cmi_vals <- vapply(
       remaining,
       function(nm) {
-        # Orthogonalise candidate activity against selected activities,
-        # then measure how much residual signal it still shares with phenotype.
-        a_resid <- if (ncol(selected_mat) == 0L) {
-          activity[[nm]]
-        } else {
-          residuals(lm(activity[[nm]] ~ selected_mat))
-        }
-        a_disc <- .discretize_equalfreq(a_resid, nbins)
-        .mutual_information(a_disc, y_disc)
+        a_resid <- residuals(lm(activity[[nm]] ~ selected_mat))
+        a_disc  <- .discretize_equalfreq(a_resid, nbins_resid)
+        .mutual_information(a_disc, y_resid_disc)
       },
       numeric(1L)
     )
@@ -412,14 +417,7 @@ run_assoc_redundancy_selection <- function(
 
     selected  <- c(selected, best_name)
     remaining <- setdiff(remaining, best_name)
-    #Change re:ratio becomes well over 1 due to unbounded residuals
-    #cum_bits  <- cum_bits + best_cmi
-
-    # Update conditioning variable: mean of all selected activity scores
-    #Change re:ratio becomes well over 1 due to unbounded residuals
-    # selected_df[[paste0("a", length(selected))]] <- activity[[best_name]]
-    # fit           <- lm(phenotype_num ~ ., data = selected_df)
-    # resid_current <- residuals(fit)
+    cum_bits  <- cum_bits + best_cmi
 
     selected_mat <- cbind(selected_mat, activity[[best_name]])
     colnames(selected_mat)[ncol(selected_mat)] <- best_name
@@ -430,12 +428,8 @@ run_assoc_redundancy_selection <- function(
       set_size         = length(gene_sets[[best_name]]),
       marginal_mi      = mi_marginal[[best_name]],
       conditional_mi   = best_cmi,
-      #redundancy_ratio = best_cmi / mi_marginal[[best_name]],
-      #redundancy_ratio = best_cmi / max(best_cmi, mi_marginal[[best_name]]),
-      is_suppressor    = best_cmi > mi_marginal[[best_name]],
-      redundancy_ratio = min(1.0, best_cmi / mi_marginal[[best_name]]),
-      #Change re:ratio becomes well over 1 due to unbounded residuals
-      #cumulative_bits  = cum_bits,
+      redundancy_ratio = best_cmi / mi_marginal[[best_name]],
+      cumulative_bits  = cum_bits,
       p_value          = assoc_lookup[[best_name]]$p_value,
       padj             = assoc_lookup[[best_name]]$padj,
       z_score          = assoc_lookup[[best_name]]$z_score,

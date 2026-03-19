@@ -1,6 +1,22 @@
+# R project files
 .Rproj.user
 .Rhistory
 .Rdata
 .httr-oauth
 .DS_Store
 .quarto
+
+# Build artifacts
+*.tar.gz
+*.Rcheck/
+inst/doc/
+
+# Data files (never commit)
+*.rds
+*.csv
+*.tsv
+*.xlsx
+
+# OS files
+Thumbs.db
+desktop.ini

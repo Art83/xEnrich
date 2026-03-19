@@ -16,21 +16,29 @@
 #'   "Scaled.tags.per.million", "Normalized.tags.per.million")} if not
 #'   supplied.
 #' @param method Character. \code{"hypergeometric"} (default) or \code{"gsea"}.
-#' @param cutoff_type Character. How to discretise expression for the
-#'   hypergeometric test:
+#' @param cutoff_type Character. How to define expressed genes for the
+#'   hypergeometric test. Ignored when \code{method = "gsea"}.
 #'   \describe{
 #'     \item{\code{"threshold"}}{Genes with mean expression strictly above
 #'       \code{cutoff_value}.}
 #'     \item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
-#'       quantile (must be in (0, 1)).}
+#'       quantile within the tissue (must be in (0, 1)).}
 #'     \item{\code{"top_k"}}{Top \code{cutoff_value} genes by mean expression
 #'       (\code{cutoff_value} must be a positive integer).}
+#'     \item{\code{"specificity"}}{Genes whose mean expression in the tissue
+#'       is at least \code{cutoff_value}-fold above the mean across all
+#'       \emph{other} tissues. Equivalent to TissueEnrich's tissue-enriched
+#'       gene definition (\code{cutoff_value = 5}). Unlike the other cutoff
+#'       types, this is computed from the full \code{reference_df} before
+#'       the per-group test, so the data frame must contain all tissues.
+#'       Produces much smaller gene sets than \code{"quantile"} and is
+#'       more appropriate when you want tissue-exclusive rather than
+#'       tissue-high genes.}
 #'   }
-#'   Ignored when \code{method = "gsea"}.
 #' @param cutoff_value Numeric. Threshold value interpreted according to
 #'   \code{cutoff_type}. Default \code{0.9} (suitable for
-#'   \code{"threshold"} and \code{"quantile"}; set an integer for
-#'   \code{"top_k"}).
+#'   \code{"threshold"} and \code{"quantile"}; set \code{5} for
+#'   \code{"specificity"}; set an integer for \code{"top_k"}).
 #' @param universe Optional character vector. Required when
 #'   \code{universe_type = "provided"}.
 #' @param universe_type Character. Background gene universe construction:
@@ -57,7 +65,7 @@
 #'   enrichment results and a \code{padj} column (BH adjustment across groups).
 #'   Returns an empty data frame if no groups pass.
 #'
-#' @seealso [run_enrichment()], [enrich_by_hpa_ihc()]
+#' @seealso [run_enrichment()], [enrich_by_hpa_ihc()], [build_tissue_sets()]
 #' @export
 enrich_by_hpa <- function(
     gene_list,
@@ -67,7 +75,7 @@ enrich_by_hpa <- function(
                        "Scaled.tags.per.million",
                        "Normalized.tags.per.million"),
     method         = c("hypergeometric", "gsea"),
-    cutoff_type    = c("threshold", "quantile", "top_k"),
+    cutoff_type    = c("threshold", "quantile", "top_k", "specificity"),
     cutoff_value   = 0.9,
     universe       = NULL,
     universe_type  = c("global", "group", "provided"),
@@ -88,12 +96,11 @@ enrich_by_hpa <- function(
   cutoff_type   <- match.arg(cutoff_type)
 
   # Auto-detect group_col and expression_col from available columns
-  group_col      <- if (length(group_col) > 1L) {
+  group_col <- if (length(group_col) > 1L) {
     .resolve_col(group_col, reference_df, "group_col")
   } else {
     match.arg(group_col,
-              choices = c("Brain.region", "Subregion",
-                          "Immune.cell", "Tissue"))
+              choices = c("Brain.region", "Subregion", "Immune.cell", "Tissue"))
   }
 
   expression_col <- if (length(expression_col) > 1L) {
@@ -130,6 +137,14 @@ enrich_by_hpa <- function(
   if (cutoff_type == "top_k" &&
       (!is.numeric(cutoff_value) || cutoff_value %% 1 != 0 || cutoff_value < 1))
     stop("For `cutoff_type = 'top_k'`, `cutoff_value` must be a positive integer.")
+  if (cutoff_type == "specificity" && cutoff_value <= 1)
+    stop("For `cutoff_type = 'specificity'`, `cutoff_value` must be > 1 ",
+         "(fold-change over mean of other tissues). ",
+         "Typical values: 4 (permissive), 5 (TissueEnrich default), 10 (stringent).")
+  if (cutoff_type == "specificity" && method == "gsea")
+    stop("`cutoff_type = 'specificity'` is only applicable to ",
+         "method = 'hypergeometric'. For GSEA, absolute expression rankings ",
+         "are derived internally from the expression column.")
 
   # --- Ignored argument warnings ----------------------------------------------
   if (!is.null(gene_stats) &&
@@ -161,6 +176,21 @@ enrich_by_hpa <- function(
       stop("`gene_stats` must be a named numeric vector.")
   }
 
+  # --- Pre-compute specificity gene sets (needs full reference_df) -----------
+  # All other cutoff types work within a single group slice.
+  # Specificity requires the global picture: fold = mean_in_group /
+  # mean_across_all_other_groups. Computed once before the per-group loop.
+  specific_genes <- if (cutoff_type == "specificity") {
+    n_groups <- length(unique(reference_df[[group_col]]))
+    if (n_groups < 2L)
+      stop("`cutoff_type = 'specificity'` requires at least 2 groups in ",
+           "`reference_df`. Only ", n_groups, " group found.")
+    message("Computing cross-tissue specificity folds across ",
+            n_groups, " groups...")
+    .compute_specificity_sets(reference_df, group_col, expression_col,
+                              cutoff_value)
+  } else NULL
+
   # --- Universe construction --------------------------------------------------
   global_universe <- switch(
     universe_type,
@@ -179,10 +209,10 @@ enrich_by_hpa <- function(
   )
 
   # --- Per-group loop ---------------------------------------------------------
-  group_list   <- split(reference_df, reference_df[[group_col]])
+  group_list <- split(reference_df, reference_df[[group_col]])
 
   results_list <- lapply(names(group_list), function(group_name) {
-    ref_group        <- group_list[[group_name]]
+    ref_group <- group_list[[group_name]]
     current_universe <- if (universe_type == "group") {
       unique(ref_group$Gene)
     } else {
@@ -190,7 +220,7 @@ enrich_by_hpa <- function(
     }
     ref_group <- ref_group[ref_group$Gene %in% current_universe, ]
 
-    # Derive per-gene mean expression (used for GSEA ranking or cutoff)
+    # Derive per-gene mean expression (used for GSEA ranking or non-specificity cutoffs)
     genes_in_group <- unique(ref_group$Gene)
     local_stats <- vapply(genes_in_group, function(g) {
       mean(ref_group[[expression_col]][ref_group$Gene == g], na.rm = TRUE)
@@ -234,7 +264,12 @@ enrich_by_hpa <- function(
         top_k = {
           k <- min(as.integer(cutoff_value), length(local_stats))
           names(sort(local_stats, decreasing = TRUE))[seq_len(k)]
-        }
+        },
+        # specificity: use pre-computed sets, intersect with current universe
+        specificity = intersect(
+          specific_genes[[group_name]],
+          current_universe
+        )
       )
       if (length(gene_set) < min_background) return(NULL)
 
@@ -284,6 +319,76 @@ enrich_by_hpa <- function(
   out[order(out$padj), ]
 }
 
+
+# =============================================================================
+# Internal helpers
+# =============================================================================
+
+#' Compute cross-tissue specificity gene sets
+#'
+#' For each group (tissue), identifies genes whose mean expression in that
+#' group is at least \code{fold_threshold}-fold above the mean across all
+#' other groups. This is the cross-tissue relative enrichment definition
+#' used by TissueEnrich (default threshold: 5).
+#'
+#' Uses vectorised matrix operations: builds a genes x groups mean-expression
+#' matrix via \code{tapply}, then for each column computes fold =
+#' col_value / mean(all_other_columns). The row-sum trick avoids an
+#' O(n_genes x n_groups^2) loop.
+#'
+#' @param reference_df Data frame with Gene, group_col, and expression_col.
+#' @param group_col Character. Group column name.
+#' @param expression_col Character. Expression value column name.
+#' @param fold_threshold Numeric > 1. Minimum fold over other groups.
+#'
+#' @return Named list (one entry per group) of character vectors of
+#'   tissue-specific gene symbols.
+#' @keywords internal
+#' @noRd
+.compute_specificity_sets <- function(reference_df, group_col,
+                                      expression_col, fold_threshold) {
+  # Build genes x groups mean-expression matrix via tapply.
+  # tapply with two index vectors returns a 2D array.
+  mat <- tapply(
+    reference_df[[expression_col]],
+    list(reference_df$Gene, reference_df[[group_col]]),
+    FUN   = mean,
+    na.rm = TRUE
+  )
+  # mat: rows = Gene, cols = group. Missing combinations are NA.
+  all_genes  <- rownames(mat)
+  all_groups <- colnames(mat)
+  n_groups   <- ncol(mat)
+
+  if (n_groups < 2L)
+    stop("Specificity requires >= 2 groups.")
+
+  # Row-sum trick:
+  # mean_others[g, t] = (rowSum[g] - mat[g,t]) / (n_nonNA[g] - 1)
+  row_sums <- rowSums(mat, na.rm = TRUE)
+  row_nobs <- rowSums(!is.na(mat))
+
+  lapply(all_groups, function(grp) {
+    this_col    <- mat[, grp]
+    not_na_this <- !is.na(this_col)
+
+    # Sum of other groups for each gene
+    others_sum <- row_sums - ifelse(not_na_this, this_col, 0)
+    # Count of non-NA other groups
+    others_n   <- row_nobs - as.integer(not_na_this)
+
+    # Mean of other groups; 0 when no other groups have data
+    mean_others <- ifelse(others_n > 0L,
+                          others_sum / others_n,
+                          0)
+
+    # Fold change; use small epsilon to avoid division by exactly zero
+    fold <- this_col / (mean_others + 1e-6)
+
+    # Return gene names passing the threshold
+    all_genes[not_na_this & !is.na(fold) & fold >= fold_threshold]
+  }) |> setNames(all_groups)
+}
 
 
 #' Auto-detect the first available column from a priority list

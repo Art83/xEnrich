@@ -75,6 +75,9 @@ Taken from \code{assoc_results$MI_bits}.}
 activities) in bits. Equals \code{marginal_mi} at step 1.}
 \item{\code{redundancy_ratio}}{\code{conditional_mi /
       marginal_mi}. Near 1 = independent; near 0 = redundant.}
+\item{\code{cumulative_bits}}{Running total of
+\code{conditional_mi}. Interpretable as total unique
+information explained by the selected set.}
 \item{\code{p_value}}{Original \code{p_value} from
 \code{assoc_results}.}
 \item{\code{padj}}{Original \code{padj} from
@@ -113,29 +116,33 @@ for each significant pathway using the same method as
 \item Discretise all activity scores using equal-frequency binning.
 \item Select the pathway with the highest
 I(activity ; phenotype) as the first pathway.
-\item Regress the phenotype on the selected pathway's activity.
-Carry the residuals forward as the new response variable.
-\item For each subsequent step, compute
-I(activity_j ; residual phenotype). A pathway redundant with
-already-selected ones will have activity already captured by the
-regression, its MI with the residuals collapses toward zero.
+\item For each subsequent step, compute conditional MI via
+\strong{double residualisation}: regress both the candidate
+pathway's activity and the phenotype on all previously selected
+pathway activities. Discretise both residual vectors and compute
+MI between them. A pathway redundant with already-selected ones
+will have its activity largely explained by the regression; its
+residual MI with the phenotype residual collapses toward zero.
 \item Select the pathway with the highest residual MI exceeding
-\code{min_gain}. Update residuals by re-fitting with all selected
-pathways. Stop when no pathway clears the threshold or
-\code{max_pathways} is reached.
+\code{min_gain}. Update the selected set. Stop when no pathway
+clears the threshold or \code{max_pathways} is reached.
 }
 }
 
-\section{Residual conditioning vs mean activity}{
+\section{Double residualisation}{
 
-Earlier versions used discretised mean activity of selected pathways
-as the conditioning variable (standard CMI stratification). This
-caused a synergy artifact: correlated pathways inflated each other's
-conditional MI above their marginal MI, preventing correct redundancy
-detection. Residual conditioning avoids this by directly removing
-explained variance from the response, the linear regression
-explicitly accounts for correlations among selected pathways before
-evaluating each candidate.
+The conditional MI at each step is estimated by orthogonalising both
+the candidate activity \emph{and} the phenotype against all selected
+pathway activities, then measuring MI between the two residual
+vectors. This is the non-parametric analog of partial correlation:
+it asks whether the candidate explains phenotypic variance that no
+previously selected pathway accounts for. Crucially, by
+residualising \emph{both} sides, the method avoids the suppressor
+artifact that arises when only the candidate is orthogonalised (in
+which case its residual can pick up noise patterns correlated with
+the original phenotype, inflating conditional MI above marginal MI).
+With double residualisation, conditional MI is approximately bounded
+by marginal MI, so \code{redundancy_ratio} stays close to \eqn{[0, 1]}.
 }
 
 \section{Redundancy ratio interpretation}{
@@ -143,11 +150,14 @@ evaluating each candidate.
 As in \code{\link{run_redundancy_selection}}, the redundancy ratio
 \code{conditional_mi / marginal_mi} is the primary interpretive output.
 A ratio near 1 means the pathway's phenotypic association is
-independent of all previously selected pathways, it explains variance
+independent of all previously selected pathways; it explains variance
 in the phenotype that no prior selection accounts for. A ratio near 0
 means the pathway's association is entirely mediated by previously
-selected pathways, it is a correlated shadow, not an independent
-signal.
+selected pathways; it is a correlated shadow, not an independent
+signal. With double residualisation, the ratio is approximately
+bounded by 1; values slightly exceeding 1 can occur due to
+finite-sample discretisation noise but are not systematically
+inflated.
 }
 
 \section{Connection to run_info_assoc}{

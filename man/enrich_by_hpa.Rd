@@ -11,7 +11,7 @@ enrich_by_hpa(
   expression_col = c("pTPM", "nTPM", "TPM", "Tags.per.million",
     "Scaled.tags.per.million", "Normalized.tags.per.million"),
   method = c("hypergeometric", "gsea"),
-  cutoff_type = c("threshold", "quantile", "top_k"),
+  cutoff_type = c("threshold", "quantile", "top_k", "specificity"),
   cutoff_value = 0.9,
   universe = NULL,
   universe_type = c("global", "group", "provided"),
@@ -40,22 +40,30 @@ supplied.}
 
 \item{method}{Character. \code{"hypergeometric"} (default) or \code{"gsea"}.}
 
-\item{cutoff_type}{Character. How to discretise expression for the
-hypergeometric test:
+\item{cutoff_type}{Character. How to define expressed genes for the
+hypergeometric test. Ignored when \code{method = "gsea"}.
 \describe{
 \item{\code{"threshold"}}{Genes with mean expression strictly above
 \code{cutoff_value}.}
 \item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
-quantile (must be in (0, 1)).}
+quantile within the tissue (must be in (0, 1)).}
 \item{\code{"top_k"}}{Top \code{cutoff_value} genes by mean expression
 (\code{cutoff_value} must be a positive integer).}
-}
-Ignored when \code{method = "gsea"}.}
+\item{\code{"specificity"}}{Genes whose mean expression in the tissue
+is at least \code{cutoff_value}-fold above the mean across all
+\emph{other} tissues. Equivalent to TissueEnrich's tissue-enriched
+gene definition (\code{cutoff_value = 5}). Unlike the other cutoff
+types, this is computed from the full \code{reference_df} before
+the per-group test, so the data frame must contain all tissues.
+Produces much smaller gene sets than \code{"quantile"} and is
+more appropriate when you want tissue-exclusive rather than
+tissue-high genes.}
+}}
 
 \item{cutoff_value}{Numeric. Threshold value interpreted according to
 \code{cutoff_type}. Default \code{0.9} (suitable for
-\code{"threshold"} and \code{"quantile"}; set an integer for
-\code{"top_k"}).}
+\code{"threshold"} and \code{"quantile"}; set \code{5} for
+\code{"specificity"}; set an integer for \code{"top_k"}).}
 
 \item{universe}{Optional character vector. Required when
 \code{universe_type = "provided"}.}
@@ -98,5 +106,5 @@ data. Expression values are aggregated per gene per group and used either
 directly as GSEA rankings or discretised for hypergeometric testing.
 }
 \seealso{
-\code{\link[=run_enrichment]{run_enrichment()}}, \code{\link[=enrich_by_hpa_ihc]{enrich_by_hpa_ihc()}}
+\code{\link[=run_enrichment]{run_enrichment()}}, \code{\link[=enrich_by_hpa_ihc]{enrich_by_hpa_ihc()}}, \code{\link[=build_tissue_sets]{build_tissue_sets()}}
 }

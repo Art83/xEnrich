@@ -1,6 +1,6 @@
 # tests/testthat/test-run_info_assoc.R
 #
-# Tests for run_info_assoc() — expression-based pathway association via MI.
+# Tests for run_info_assoc() -- expression-based pathway association via MI.
 # Organised as:
 #   1. Input validation
 #   2. Output structure
@@ -291,27 +291,32 @@ test_that("run_info_assoc is reproducible with same seed", {
   expect_equal(res1$MI_bits, res2$MI_bits)
 })
 
-test_that("run_info_assoc gives different p_values with different seeds", {
+test_that("run_info_assoc null distribution varies with seed", {
   d    <- make_assoc_data()
   res1 <- suppressMessages(
-    run_info_assoc(d$expr, d$phenotype, d$gene_sets, n_perm = 50, seed = 1)
+    run_info_assoc(d$expr, d$phenotype, d$gene_sets, n_perm = 200, seed = 1)
   )
   res2 <- suppressMessages(
-    run_info_assoc(d$expr, d$phenotype, d$gene_sets, n_perm = 50, seed = 2)
+    run_info_assoc(d$expr, d$phenotype, d$gene_sets, n_perm = 200, seed = 2)
   )
-  # MI_bits are deterministic (no randomness in scoring), p_values vary
+  # MI_bits are deterministic (no randomness in scoring)
   expect_equal(res1$MI_bits, res2$MI_bits)
-  expect_false(identical(res1$p_value, res2$p_value))
+  # Null distribution statistics (null_mean, null_sd) should differ
+  # between seeds because permutation draws differ
+  expect_false(identical(res1$null_mean, res2$null_mean))
 })
 
-
 test_that("binary integer phenotype works (not discretized to constant)", {
-  # This was the bug: as.integer(status == "AZ") is numeric,
-  # so it went through discretize_equalfreq and collapsed to a constant
-  bin_pheno <- as.integer(c(rep(0, 30), rep(1, 30)))
+  # Regression test: as.integer(status == "case") is numeric with only
+  # two unique values, so it must be treated as categorical (not passed
+  # through discretize_equalfreq which collapses it to a constant bin).
+  # n = 60 matches bin_pheno length (30 + 30).
+  d         <- make_assoc_data(n = 60, seed = 7)
+  bin_pheno <- as.integer(c(rep(0L, 30L), rep(1L, 30L)))
   expect_no_error(
-    res <- run_info_assoc(expr, bin_pheno, gene_sets, n_perm=100, seed=1)
+    res <- suppressMessages(
+      run_info_assoc(d$expr, bin_pheno, d$gene_sets, n_perm = 100, seed = 1)
+    )
   )
-  # top set should have real MI, not zero
   expect_gt(max(res$MI_bits), 0)
 })

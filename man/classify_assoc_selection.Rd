@@ -36,16 +36,13 @@ for \code{"partial"} class (below = \code{"redundant"}). Default
 \value{
 The input data frame with three additional columns appended:
 \describe{
-\item{\code{marginal_strength}}{Factor: \code{"strong"},
-\code{"moderate"}, or \code{"weak"}. Ordered from strongest
-to weakest.}
-\item{\code{signal_class}}{Factor: \code{"primary"},
-\code{"independent"}, \code{"partial"}, \code{"redundant"}, or
-\code{"suppressor"}. Ordered from most to least reportable.}
-\item{\code{action}}{Character. Plain-language recommendation:
-\code{"report"}, \code{"report as secondary"},
-\code{"mention as correlated"}, \code{"dismiss"}, or
-\code{"inspect — possible artifact"}.}
+\item{\code{marginal_strength}}{Ordered factor: \code{"strong"},
+\code{"moderate"}, \code{"weak"}.}
+\item{\code{signal_class}}{Ordered factor: \code{"primary"},
+\code{"independent"}, \code{"partial"}, \code{"redundant"},
+\code{"suppressor"}.}
+\item{\code{action}}{Character. Plain-language reporting
+recommendation.}
 }
 }
 \description{
@@ -85,7 +82,7 @@ with earlier selections.
 \item \code{"redundant"}: ratio < \code{ratio_partial}. Largely
 captured by earlier pathways. Dismiss from primary reporting.
 \item \code{"suppressor"}: \code{is_suppressor == TRUE}. Conditional
-MI exceeded marginal MI after orthogonalisation — selection was
+MI exceeded marginal MI after orthogonalisation -- selection was
 driven by noise interaction with already-selected pathways.
 Inspect before reporting.
 }
@@ -96,11 +93,11 @@ since it signals a potential artifact regardless of ratio magnitude.
 
 \section{Threshold guidance}{
 
-Defaults are calibrated for typical omics datasets (n = 100–500 samples,
+Defaults are calibrated for typical omics datasets (n = 100-500 samples,
 Reactome pathway gene sets). Adjust for your context:
 \itemize{
-\item Noisier data (n < 100): lower \code{z_strong} to 7, \code{z_moderate}
-to 3.
+\item Noisier data (n < 100): lower \code{z_strong} to 7,
+\code{z_moderate} to 3.
 \item Many correlated pathways (e.g. GO terms): raise
 \code{ratio_independent} to 0.6.
 \item Conservative reporting: raise \code{ratio_primary} to 0.8.
@@ -141,6 +138,6 @@ print(classified[, c("pathway", "marginal_strength", "signal_class", "action")])
 }
 \seealso{
 \code{\link{run_assoc_redundancy_selection}} for the upstream
-selection step. \code{\link{plot_gains}} to visualise the selection
+selection step, \code{\link{plot_gains}} to visualise the selection
 profile.
 }

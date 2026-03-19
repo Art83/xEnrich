@@ -4,9 +4,9 @@
 \name{xEnrich-package}
 \alias{xEnrich}
 \alias{xEnrich-package}
-\title{xEnrich: Information-Theoretic Enrichment Analysis with Redundancy Selection}
+\title{xEnrich: Multi-Scale Enrichment with Information Theory and Location Context}
 \description{
-Provides a unified framework for gene set enrichment analysis addressing two unsolved problems in standard workflows: (1) p-value estimates from fixed permutation schemes carry unquantified Monte Carlo uncertainty, and (2) significant pathway lists conflate independent signals with redundant co-annotations of the same biology. Adaptive permutation testing allocates computation according to signal clarity, providing explicit confidence intervals on p-values and flagging genuinely uncertain results. Information-theoretic scoring via mutual information ranks pathways by information content, enabling greedy conditional MI selection that identifies the minimal non-redundant set of independent signals. The framework operates across gene list enrichment, ranked list enrichment, and pathway-phenotype association analysis.
+A unified framework for translating omics results into biological context. Provides two complementary analysis tracks: (1) an information-theoretic enrichment track that scores gene sets by mutual information rather than raw overlap, uses adaptive permutation testing with explicit confidence intervals on p-values, and identifies the minimal non-redundant set of independent signals via greedy conditional mutual information selection; and (2) a location-aware track that maps gene or protein lists to enriched organs using Human Protein Atlas data (IHC and RNA) and then resolves cell-type origin within those organs using Tabula Sapiens single-cell transcriptomes. The two tracks share a common gene-list interface and can be combined to answer not only which pathways are altered but where in the body and in which cell type the changes are most relevant.
 }
 \seealso{
 Useful links:

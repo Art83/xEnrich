@@ -210,12 +210,16 @@ run_info_enrichment <- function(
 #' Vectorised over \code{k} - pass a scalar for a single observed value or a
 #' vector for the permutation null in one call.
 #'
+#' Applies the Miller-Madow bias correction. For a 2x2 table the correction
+#' is at most 1/(2N ln 2) bits — negligible at typical universe sizes but
+#' included for consistency with the sample-space MI functions.
+#'
 #' @param N Integer. Universe size.
 #' @param n Integer. Gene list size.
 #' @param m Integer. Gene set size.
 #' @param k Integer (scalar or vector). Overlap count(s).
 #'
-#' @return Numeric vector of mutual information values in bits.
+#' @return Numeric vector of mutual information values in bits (>= 0).
 #' @keywords internal
 #' @noRd
 .ite_overlap_bits <- function(N, n, m, k) {
@@ -233,10 +237,17 @@ run_info_enrichment <- function(
     ifelse(p <= 0, 0, p * log2(p / (pa * pb)))
   }
 
-  term(p11, p1., p.1) +
+  mi_raw <- term(p11, p1., p.1) +
     term(p10, p1., p.0) +
     term(p01, p0., p.1) +
     term(p00, p0., p.0)
+
+  # Miller-Madow: k_x = k_y = 2 (always, given n>0, m>0, n<N, m<N).
+  # k_xy = number of non-zero joint cells.
+  k_xy <- (p11 > 0) + (p10 > 0) + (p01 > 0) + (p00 > 0)
+  correction <- (3 - k_xy) / (2 * N * log(2))
+
+  pmax(0, mi_raw + correction)
 }
 
 

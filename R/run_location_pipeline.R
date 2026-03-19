@@ -43,10 +43,11 @@
 #' @noRd
 .map_organs_to_tabula <- function(organs) {
   # tabula_hpa_bridge and tabula_no_hpa_bridge live in sysdata.rda
-  matched   <- tabula_hpa_bridge[tabula_hpa_bridge$hpa_tissue %in% organs, ]
+  organs <- tolower(organs)
+  matched   <- tabula_hpa_bridge[tolower(tabula_hpa_bridge$hpa_tissue) %in% organs, ]
   no_bridge <- organs[
-    !organs %in% tabula_hpa_bridge$hpa_tissue &
-      !organs %in% tabula_no_hpa_bridge
+    !organs %in% tolower(tabula_hpa_bridge$hpa_tissue) &
+      !organs %in% tolower(tabula_no_hpa_bridge)
   ]
   known_absent <- organs[organs %in% tabula_no_hpa_bridge]
 

@@ -1,20 +1,23 @@
 Package: xEnrich
-Title: Information-Theoretic Enrichment Analysis with Redundancy Selection
-Version: 0.0.0.9000
-Authors@R: 
+Title: Multi-Scale Enrichment with Information Theory and Location Context
+Version: 0.1.0
+Authors@R:
     person("Artur", "Shvetcov", , "shvetsov1983@gmail.com", role = c("aut", "cre"))
-Description: Provides a unified framework for gene set enrichment analysis
-    addressing two unsolved problems in standard workflows: (1) p-value
-    estimates from fixed permutation schemes carry unquantified Monte Carlo
-    uncertainty, and (2) significant pathway lists conflate independent signals
-    with redundant co-annotations of the same biology. Adaptive permutation
-    testing allocates computation according to signal clarity, providing
-    explicit confidence intervals on p-values and flagging genuinely uncertain
-    results. Information-theoretic scoring via mutual information ranks pathways
-    by information content, enabling greedy conditional MI selection that
-    identifies the minimal non-redundant set of independent signals. The
-    framework operates across gene list enrichment, ranked list enrichment,
-    and pathway-phenotype association analysis.
+Description: A unified framework for translating omics results into biological
+    context. Provides two complementary analysis tracks: (1) an
+    information-theoretic enrichment track that scores gene sets by mutual
+    information rather than raw overlap, uses adaptive permutation testing with
+    explicit confidence intervals on p-values, and identifies the minimal
+    non-redundant set of independent signals via greedy conditional mutual
+    information selection; and (2) a location-aware track that maps gene or
+    protein lists to enriched organs using Human Protein Atlas data (IHC and
+    RNA) and then resolves cell-type origin within those organs using Tabula
+    Sapiens single-cell transcriptomes. The two tracks share a common gene-list
+    interface and can be combined to answer not only which pathways are altered
+    but where in the body and in which cell type the changes are most relevant.
+    Reference data (Human Protein Atlas and Tabula Sapiens) is hosted on Zenodo 
+    (https://doi.org/10.5281/zenodo.19106109) and cached locally on first use.
+
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -27,7 +30,13 @@ Imports:
     Matrix,
     stats,
     digest,
-    utils
+    utils,
+    graphics,
+    grDevices
 Suggests:
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tools,
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
+VignetteBuilder: knitr

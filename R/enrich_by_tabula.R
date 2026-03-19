@@ -20,25 +20,50 @@
 #' the analysis. A value of \code{0.1} (10\% of cells) is a standard
 #' threshold in scRNA analysis.
 #'
+#' @section cutoff_type = "specificity":
+#' Unlike the other cutoff types, which rank genes by expression level within
+#' a single cell type, \code{"specificity"} computes a cross-cell-type fold
+#' change: a gene is included if its mean expression in the cell type is at
+#' least \code{cutoff_value}-fold above the mean across all \emph{other} cell
+#' types in the same organ. This identifies genes that are distinctive to a
+#' cell type rather than merely highly expressed in it.
+#'
+#' The distinction matters for interpretation: a quantile cutoff answers "which
+#' cell types express my query genes at high absolute levels?"; specificity
+#' answers "which cell types are my query genes distinctive to?" For most
+#' biomarker discovery questions, specificity is the more informative question.
+#'
+#' This is conceptually equivalent to TissueEnrich's tissue-enriched gene
+#' definition applied at the cell-type level within a single organ, using
+#' the same cross-group fold-change approach as
+#' \code{\link{enrich_by_hpa}(..., cutoff_type = "specificity")}.
+#'
+#' Typical \code{cutoff_value} for cell-type specificity: \code{2} (moderate,
+#' includes co-expressed genes), \code{3} (default, selective), \code{5}
+#' (stringent, tissue-enriched equivalent). Lower than HPA tissue specificity
+#' because cell types within one organ share more genes than tissues across
+#' the whole body.
+#'
 #' @param gene_list Character vector of gene symbols (the query set).
 #' @param reference_df Data frame of Tabula Sapiens expression data for one
 #'   organ. Must contain columns \code{GeneSymbol}, \code{CellType},
 #'   \code{MeanLogNorm}, and \code{PctExpr}.
 #' @param method Character. \code{"hypergeometric"} (default) or \code{"gsea"}.
-#' @param cutoff_type Character. How to discretise expression for the
-#'   hypergeometric test:
+#' @param cutoff_type Character. How to define the expressed gene set per
+#'   cell type for the hypergeometric test. Ignored when \code{method = "gsea"}.
 #'   \describe{
+#'     \item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
+#'       quantile within the cell type (must be in (0, 1)). Default.}
 #'     \item{\code{"threshold"}}{Genes with mean expression strictly above
 #'       \code{cutoff_value}.}
-#'     \item{\code{"quantile"}}{Genes at or above the \code{cutoff_value}
-#'       quantile (must be in (0, 1)).}
 #'     \item{\code{"top_k"}}{Top \code{cutoff_value} genes by mean expression
 #'       (\code{cutoff_value} must be a positive integer).}
+#'     \item{\code{"specificity"}}{Genes whose mean expression in the cell type
+#'       is at least \code{cutoff_value}-fold above the mean across all other
+#'       cell types in the organ. See the specificity section above.}
 #'   }
-#'   Ignored when \code{method = "gsea"}.
 #' @param cutoff_value Numeric. Threshold interpreted per \code{cutoff_type}.
-#'   Default \code{0.3} (log-normalised expression; suitable for
-#'   \code{"threshold"}).
+#'   Default \code{0.9} for quantile. Use \code{3} for specificity.
 #' @param min_pct_expr Numeric in \[0, 1\]. Minimum fraction of cells in a
 #'   cell type that must express a gene for it to be included in the
 #'   background. Default \code{0.1}. Set to \code{0} to disable.
@@ -53,8 +78,7 @@
 #'     \item{\code{"provided"}}{Use \code{universe} directly.}
 #'   }
 #' @param min_overlap Integer. Minimum overlap between \code{gene_list} and
-#'   the cell-type universe. Cell types below this threshold are silently
-#'   skipped. Default \code{1}.
+#'   the cell-type universe. Default \code{1}.
 #' @param min_background Integer. Minimum background size to attempt
 #'   enrichment. Default \code{10}.
 #' @param gene_stats Optional named numeric vector. Used only when
@@ -77,7 +101,7 @@ enrich_by_tabula <- function(
     gene_list,
     reference_df,
     method         = c("hypergeometric", "gsea"),
-    cutoff_type    = c("quantile", "threshold", "top_k"),
+    cutoff_type    = c("quantile", "threshold", "top_k", "specificity"),
     cutoff_value   = 0.9,
     min_pct_expr   = 0.1,
     universe       = NULL,
@@ -125,6 +149,14 @@ enrich_by_tabula <- function(
   if (cutoff_type == "top_k" &&
       (!is.numeric(cutoff_value) || cutoff_value %% 1 != 0 || cutoff_value < 1))
     stop("For `cutoff_type = 'top_k'`, `cutoff_value` must be a positive integer.")
+  if (cutoff_type == "specificity" && cutoff_value <= 1)
+    stop("For `cutoff_type = 'specificity'`, `cutoff_value` must be > 1 ",
+         "(fold-change over mean of other cell types). ",
+         "Typical values: 2 (permissive), 3 (default), 5 (stringent).")
+  if (cutoff_type == "specificity" && method == "gsea")
+    stop("`cutoff_type = 'specificity'` is only applicable to ",
+         "method = 'hypergeometric'. For GSEA, expression rankings are ",
+         "derived from MeanLogNorm directly.")
 
   # --- Ignored argument warnings ----------------------------------------------
   if (!is.null(gene_stats) &&
@@ -162,15 +194,28 @@ enrich_by_tabula <- function(
     stop("No rows remain after removing NA values in MeanLogNorm.")
 
   # --- PctExpr filter ---------------------------------------------------------
-  # Applied globally before splitting so the universe reflects
-  # genuinely detectable genes only. The cutoff then selects the
-  # highly-expressed subset within each cell type's own distribution.
+  # Applied globally before splitting so the universe reflects genuinely
+  # detectable genes only. Also applied before specificity computation so that
+  # sporadically-expressed genes do not inflate cross-cell-type fold changes.
   if (min_pct_expr > 0) {
     reference_df <- reference_df[reference_df$PctExpr >= min_pct_expr, ]
     if (nrow(reference_df) == 0L)
       stop("No rows remain after PctExpr filtering (min_pct_expr = ",
            min_pct_expr, "). Consider lowering this threshold.")
   }
+
+  # --- Pre-compute specificity sets (needs full reference_df) ----------------
+  # Specificity requires the cross-cell-type view: fold = mean_in_this_ct /
+  # mean_across_all_other_cts. Computed once before the per-cell-type loop.
+  specific_genes_ct <- if (cutoff_type == "specificity") {
+    n_cts <- length(unique(reference_df$CellType))
+    if (n_cts < 2L)
+      stop("`cutoff_type = 'specificity'` requires at least 2 cell types in ",
+           "`reference_df`. Only ", n_cts, " cell type found.")
+    message("Computing cross-cell-type specificity folds across ",
+            n_cts, " cell types...")
+    .compute_specificity_sets_ct(reference_df, cutoff_value)
+  } else NULL
 
   # --- Global universe --------------------------------------------------------
   global_universe <- switch(
@@ -181,7 +226,7 @@ enrich_by_tabula <- function(
       dropped <- length(universe) - length(u)
       if (dropped > 0L)
         message(dropped, " of ", length(universe),
-                " provided universe genes absent from reference_df.Excluded.")
+                " provided universe genes absent from reference_df. Excluded.")
       if (length(u) == 0L)
         stop("Provided universe has no overlap with reference_df$GeneSymbol.")
       u
@@ -190,11 +235,10 @@ enrich_by_tabula <- function(
   )
 
   # --- Per cell-type loop -----------------------------------------------------
-  cell_types   <- unique(reference_df$CellType)
-  ct_list      <- split(reference_df, reference_df$CellType)
+  ct_list <- split(reference_df, reference_df$CellType)
 
   results_list <- lapply(names(ct_list), function(ct_name) {
-    ct_df            <- ct_list[[ct_name]]
+    ct_df <- ct_list[[ct_name]]
     current_universe <- if (universe_type == "group") {
       unique(ct_df$GeneSymbol)
     } else {
@@ -204,8 +248,8 @@ enrich_by_tabula <- function(
     ct_df <- ct_df[ct_df$GeneSymbol %in% current_universe, ]
 
     # Per-gene mean MeanLogNorm within this cell type
-    genes_in_ct  <- unique(ct_df$GeneSymbol)
-    local_stats  <- vapply(genes_in_ct, function(g) {
+    genes_in_ct <- unique(ct_df$GeneSymbol)
+    local_stats <- vapply(genes_in_ct, function(g) {
       mean(ct_df$MeanLogNorm[ct_df$GeneSymbol == g], na.rm = TRUE)
     }, numeric(1L))
     local_stats      <- local_stats[names(local_stats) %in% current_universe]
@@ -239,15 +283,20 @@ enrich_by_tabula <- function(
     } else {
       gene_set <- switch(
         cutoff_type,
-        threshold = names(local_stats)[local_stats > cutoff_value],
-        quantile  = {
+        threshold   = names(local_stats)[local_stats > cutoff_value],
+        quantile    = {
           q_thresh <- quantile(local_stats, cutoff_value, na.rm = TRUE)
           names(local_stats)[local_stats >= q_thresh]
         },
-        top_k = {
+        top_k       = {
           k <- min(as.integer(cutoff_value), length(local_stats))
           names(sort(local_stats, decreasing = TRUE))[seq_len(k)]
-        }
+        },
+        # specificity: pre-computed, intersect with current universe
+        specificity = intersect(
+          specific_genes_ct[[ct_name]],
+          current_universe
+        )
       )
       if (length(gene_set) < min_background) return(NULL)
 
@@ -262,7 +311,6 @@ enrich_by_tabula <- function(
 
     if (is.null(res)) return(NULL)
 
-    # Safe row construction
     row <- data.frame(
       cell_type      = ct_name,
       method         = res$method,
@@ -294,4 +342,68 @@ enrich_by_tabula <- function(
   out      <- do.call(rbind, results_list)
   out$padj <- p.adjust(out$p_value, method = "BH")
   out[order(out$padj), ]
+}
+
+
+# =============================================================================
+# Internal helpers
+# =============================================================================
+
+#' Compute cross-cell-type specificity gene sets from Tabula data
+#'
+#' For each cell type in a single-organ Tabula Sapiens dataset, identifies
+#' genes whose mean expression in that cell type is at least
+#' \code{fold_threshold}-fold above the mean across all other cell types.
+#' This is the cell-type-level equivalent of \code{.compute_specificity_sets()}
+#' for HPA tissue data.
+#'
+#' The PctExpr filter should be applied to \code{reference_df} before calling
+#' this function, so that sporadically-expressed genes do not inflate folds.
+#' Uses the same vectorised matrix approach (tapply + row-sum trick) as
+#' \code{.compute_specificity_sets()} for efficiency.
+#'
+#' @param reference_df Data frame with GeneSymbol, CellType, MeanLogNorm.
+#'   PctExpr filtering must already be applied.
+#' @param fold_threshold Numeric > 1. Minimum fold over mean of other cell types.
+#'
+#' @return Named list (one entry per cell type) of character vectors of
+#'   cell-type-specific gene symbols.
+#' @keywords internal
+#' @noRd
+.compute_specificity_sets_ct <- function(reference_df, fold_threshold) {
+  # Build genes x cell types mean-expression matrix via tapply.
+  mat <- tapply(
+    reference_df$MeanLogNorm,
+    list(reference_df$GeneSymbol, reference_df$CellType),
+    FUN   = mean,
+    na.rm = TRUE
+  )
+  # mat: rows = GeneSymbol, cols = CellType. Missing combinations are NA.
+  all_genes  <- rownames(mat)
+  all_cts    <- colnames(mat)
+  n_cts      <- ncol(mat)
+
+  if (n_cts < 2L)
+    stop("Specificity requires >= 2 cell types.")
+
+  # Row-sum trick:
+  # mean_others[g, ct] = (rowSum[g] - mat[g, ct]) / (n_nonNA[g] - 1)
+  # Adding a small epsilon (1e-6) avoids division by zero for genes with
+  # zero expression in all other cell types (rare but possible after PctExpr
+  # filtering reduces some cell types to zero entries).
+  row_sums <- rowSums(mat, na.rm = TRUE)
+  row_nobs <- rowSums(!is.na(mat))
+
+  lapply(all_cts, function(ct) {
+    this_col    <- mat[, ct]
+    not_na_this <- !is.na(this_col)
+
+    others_sum <- row_sums - ifelse(not_na_this, this_col, 0)
+    others_n   <- row_nobs - as.integer(not_na_this)
+
+    mean_others <- ifelse(others_n > 0L, others_sum / others_n, 0)
+    fold        <- this_col / (mean_others + 1e-6)
+
+    all_genes[not_na_this & !is.na(fold) & fold >= fold_threshold]
+  }) |> setNames(all_cts)
 }
